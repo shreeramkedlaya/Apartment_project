@@ -12,6 +12,8 @@ class Notice(models.Model):
         COMMUNITY = 'Community'
         EMERGENCY = 'Emergency'
         GENERAL = 'General'
+        EVENT = 'Event'
+        HOLIDAY = 'Holiday'
 
     class Priority(models.TextChoices):
         LOW = 'Low'

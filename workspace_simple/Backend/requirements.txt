@@ -14,3 +14,4 @@ django-celery-results==2.5.1
 channels==4.3.1
 daphne==4.2.1
 channels-redis==4.3.0
+holidays==0.10.4

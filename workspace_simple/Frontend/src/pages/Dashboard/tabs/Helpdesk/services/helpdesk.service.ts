@@ -33,7 +33,9 @@ export const HelpdeskService = {
   // Categories API
   getCategories: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.get('/issues/categories/', { params });
-    if (Array.isArray(data)) return { results: data, count: data.length };
+    if (Array.isArray(data)) return data;
+    if (data && data.status === 'success' && Array.isArray(data.data)) return data.data;
+    if (data && Array.isArray(data.results)) return data.results;
     return data;
   },
   
