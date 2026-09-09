@@ -1,0 +1,139 @@
+[
+  {
+    "id": "dashboard",
+    "name": "Dashboard",
+    "children": [
+      { "id": "dashboard.view", "name": "View" }
+    ]
+  },
+  {
+    "id": "resident_services",
+    "name": "Resident Services",
+    "children": [
+      {
+        "id": "resident_services.my_profile",
+        "name": "My Profile",
+        "children": [
+          { "id": "resident_services.my_profile.view", "name": "View" },
+          { "id": "resident_services.my_profile.edit", "name": "Edit" }
+        ]
+      },
+      {
+        "id": "resident_services.vehicles",
+        "name": "Vehicles",
+        "children": [
+          { "id": "resident_services.vehicles.view", "name": "View" },
+          { "id": "resident_services.vehicles.add", "name": "Add" },
+          { "id": "resident_services.vehicles.edit", "name": "Edit" },
+          { "id": "resident_services.vehicles.delete", "name": "Delete" }
+        ]
+      },
+      {
+        "id": "resident_services.receipts",
+        "name": "Receipts",
+        "children": [
+          { "id": "resident_services.receipts.view", "name": "View" },
+          { "id": "resident_services.receipts.download", "name": "Download" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "helpdesk",
+    "name": "Helpdesk",
+    "children": [
+      {
+        "id": "helpdesk.requests",
+        "name": "Requests",
+        "children": [
+          { "id": "helpdesk.requests.view", "name": "View" },
+          { "id": "helpdesk.requests.add", "name": "Add" },
+          { "id": "helpdesk.requests.edit", "name": "Edit" },
+          { "id": "helpdesk.requests.delete", "name": "Delete" },
+          { "id": "helpdesk.requests.resolve", "name": "Resolve/Close" }
+        ]
+      },
+      {
+        "id": "helpdesk.categories",
+        "name": "Categories",
+        "children": [
+          { "id": "helpdesk.categories.view", "name": "View" },
+          { "id": "helpdesk.categories.add", "name": "Add" },
+          { "id": "helpdesk.categories.edit", "name": "Edit" },
+          { "id": "helpdesk.categories.delete", "name": "Delete" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community",
+    "name": "Community",
+    "children": [
+      {
+        "id": "community.notices",
+        "name": "Notices",
+        "children": [
+          { "id": "community.notices.view", "name": "View" },
+          { "id": "community.notices.add", "name": "Add" },
+          { "id": "community.notices.edit", "name": "Edit" },
+          { "id": "community.notices.delete", "name": "Delete" },
+          { "id": "community.notices.approve", "name": "Approve/Reject" }
+        ]
+      },
+      {
+        "id": "community.amenities",
+        "name": "Amenities",
+        "children": [
+          { "id": "community.amenities.view", "name": "View" },
+          { "id": "community.amenities.add", "name": "Add" },
+          { "id": "community.amenities.edit", "name": "Edit" },
+          { "id": "community.amenities.delete", "name": "Delete" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "administration",
+    "name": "Administration",
+    "children": [
+      {
+        "id": "administration.users",
+        "name": "Users",
+        "children": [
+          { "id": "administration.users.view", "name": "View" },
+          { "id": "administration.users.add", "name": "Add" },
+          { "id": "administration.users.edit", "name": "Edit" },
+          { "id": "administration.users.delete", "name": "Delete" },
+          { "id": "administration.users.block", "name": "Block/Unblock" }
+        ]
+      },
+      {
+        "id": "administration.roles",
+        "name": "Roles",
+        "children": [
+          { "id": "administration.roles.view", "name": "View" },
+          { "id": "administration.roles.add", "name": "Add" },
+          { "id": "administration.roles.edit", "name": "Edit" },
+          { "id": "administration.roles.delete", "name": "Delete" },
+          { "id": "administration.roles.manage_access", "name": "Manage Access" }
+        ]
+      },
+      {
+        "id": "administration.settings",
+        "name": "Settings",
+        "children": [
+          { "id": "administration.settings.view", "name": "View" },
+          { "id": "administration.settings.edit", "name": "Edit" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "emergency",
+    "name": "Emergency",
+    "children": [
+      { "id": "emergency.view", "name": "View" },
+      { "id": "emergency.trigger", "name": "Trigger SOS" }
+    ]
+  }
+]
