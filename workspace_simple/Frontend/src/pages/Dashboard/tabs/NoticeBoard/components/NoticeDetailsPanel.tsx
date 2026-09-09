@@ -60,8 +60,21 @@ const NoticeDetailsPanel: React.FC<NoticeDetailsPanelProps> = ({
     }
   };
 
+  const handleAcknowledge = async () => {
+    setLoading(true);
+    try {
+      await noticeService.acknowledgeNotice(notice.id);
+      showToast('Notice acknowledged successfully', 'success');
+      onNoticeUpdated();
+    } catch (error: any) {
+      showToast(error.response?.data?.error || 'Failed to acknowledge', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderStatusBadge = () => {
-    switch(notice.status) {
+    switch (notice.status) {
       case 'Published': return <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Published</span>;
       case 'Draft': return <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">Draft</span>;
       case 'Scheduled': return <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold">Scheduled</span>;
@@ -100,9 +113,9 @@ const NoticeDetailsPanel: React.FC<NoticeDetailsPanelProps> = ({
   const panelContent = (
     <>
       <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      
+
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col transform transition-transform duration-300">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Notice Details</h2>
@@ -153,7 +166,7 @@ const NoticeDetailsPanel: React.FC<NoticeDetailsPanelProps> = ({
               <div className="text-xs text-blue-600 dark:text-blue-400 mb-4">
                 Deadline: {notice.acknowledge_by ? new Date(notice.acknowledge_by).toLocaleString() : 'None'}
               </div>
-              
+
               {/* Basic Metrics display if admin */}
               {canManageNotices && notice.acknowledgements && (
                 <div className="mt-4 border-t border-blue-200 dark:border-blue-800 pt-4">
@@ -166,6 +179,21 @@ const NoticeDetailsPanel: React.FC<NoticeDetailsPanelProps> = ({
                       {notice.acknowledgements.filter(a => a.status === 'Pending').length} Pending
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* Action for resident */}
+              {!canManageNotices && notice.status === 'Published' && (
+                <div className="mt-4 border-t border-blue-200 dark:border-blue-800 pt-4">
+                  {notice.user_has_acknowledged ? (
+                    <div className="w-full py-2.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl flex items-center justify-center gap-2">
+                      <CheckSquare className="w-4 h-4" /> Acknowledged ✓
+                    </div>
+                  ) : (
+                    <button disabled={loading} onClick={handleAcknowledge} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors">
+                      <CheckSquare className="w-4 h-4" /> Acknowledge Notice
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -199,7 +227,7 @@ const NoticeDetailsPanel: React.FC<NoticeDetailsPanelProps> = ({
                 Request Approval
               </button>
             )}
-            
+
             {notice.status === 'Draft' && (
               <button disabled={loading} onClick={() => setConfirmAction('publish')} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors">
                 <Send className="w-4 h-4" /> Publish Now

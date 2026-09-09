@@ -11,9 +11,16 @@ class NoticeSerializer(serializers.ModelSerializer):
 
     created_by = serializers.CharField(source='created_by.username', read_only=True)
     is_editable = serializers.SerializerMethodField()
+    user_has_acknowledged = serializers.SerializerMethodField()
 
     def get_is_editable(self, obj):
         return timezone.now() <= (obj.created_at + timedelta(minutes=15))
+
+    def get_user_has_acknowledged(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.acknowledgements.filter(user=request.user, status='Acknowledged').exists()
 
     def validate_title(self, value):
         if not value or not value.strip():

@@ -28,6 +28,7 @@ export interface Notice {
   created_by: string;
   attachments: NoticeAttachment[];
   acknowledgements?: NoticeAcknowledgement[]; // Mostly for managers
+  user_has_acknowledged?: boolean;
 }
 
 class NoticeService {
