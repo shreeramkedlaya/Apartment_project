@@ -17,13 +17,13 @@ build/
 
 # Django
 *.sqlite3
-/workspace_simple/Backend/staticfiles/
-/workspace_simple/Backend/media/
-/workspace_simple/Backend/logs/*.log
+/Backend/staticfiles/
+/Backend/media/
+/Backend/logs/*.log
 
 # Migrations (keep __init__.py, ignore actual migration files if auto-generated)
 # Uncomment the next line if you want to exclude migrations:
-# /workspace_simple/Backend/migrations/
+# /Backend/migrations/
 
 # Environment variables
 .env
@@ -32,9 +32,9 @@ build/
 
 # ─── Node / Frontend ─────────────────────────────────────────────────────────
 node_modules/
-/workspace_simple/Frontend/dist/
-/workspace_simple/Frontend/dist-ssr/
-/workspace_simple/Frontend/.vite/
+/Frontend/dist/
+/Frontend/dist-ssr/
+/Frontend/.vite/
 package-lock.json
 *.local
 npm-debug.log*
@@ -64,7 +64,7 @@ obsidian_vault/
 *.swp
 *.tmp
 .cache/
-workspace_simple/Backend/firebase-adminsdk.json
+/Backend/firebase-adminsdk.json
 
 # Ignore all __init__.py files
 **/__init__.py
