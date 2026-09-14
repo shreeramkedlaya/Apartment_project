@@ -92,7 +92,7 @@ const RequestDetailsPanel: React.FC<RequestDetailsPanelProps> = ({
             </span>
           </div>
           <div>
-            <span className="block text-xs font-medium text-gray-500 mb-1">Raised By</span>
+            <span className="block text-xs font-medium text-gray-500 mb-1">Created By</span>
             <span className="text-sm font-medium text-gray-900 dark:text-white">
               {request.created_by?.name || 'Resident'}
             </span>

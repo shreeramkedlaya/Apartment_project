@@ -250,57 +250,56 @@ const UserAccessModal: React.FC<UserAccessModalProps> = ({ user, isOpen, onClose
       isOpen={isOpen}
       onClose={onClose}
       title={`Manage Access: ${user.name || user.username}`}
-      description="Select the permissions this user can access. Role-inherited permissions are marked with 'via Role'. Changes take effect on the user's next login."
+      description="Select the permissions this user can access. Role-inherited permissions are marked with 'via Role'."
       footer={footer}
       maxWidth="2xl"
     >
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      <div className="space-y-3">
+        {error && (
+          <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
-      {/* Stats bar */}
-      <div className="flex items-center gap-6 px-5 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
+        {/* Stats bar */}
+        <div className="flex items-center gap-6 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
+            <div className="flex flex-col">
+              <span className="font-bold text-gray-800 dark:text-gray-200 text-xs leading-tight">{roleTabs.size}</span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">from Role</span>
+            </div>
+          </div>
+          <div className="text-gray-200 dark:text-gray-700">|</div>
           <div className="flex flex-col">
-            <span className="font-bold text-gray-800 dark:text-gray-200 text-sm leading-tight">{roleTabs.size}</span>
-            <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-tight">from Role</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-tight">+{extraCount}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">extra overrides</span>
+          </div>
+          <div className="text-gray-200 dark:text-gray-700">|</div>
+          <div className="flex flex-col">
+            <span className="font-bold text-gray-800 dark:text-gray-200 text-xs leading-tight">{selected.size}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">total effective</span>
           </div>
         </div>
-        <div className="text-gray-200 dark:text-gray-700">|</div>
-        <div className="flex flex-col">
-          <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm leading-tight">+{extraCount}</span>
-          <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-tight">extra overrides</span>
-        </div>
-        <div className="text-gray-200 dark:text-gray-700">|</div>
-        <div className="flex flex-col">
-          <span className="font-bold text-gray-800 dark:text-gray-200 text-sm leading-tight">{selected.size}</span>
-          <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-tight">total effective</span>
-        </div>
-        <button onClick={toggleAll} className="ml-auto text-xs text-blue-600 hover:underline font-medium">
-          {allSelected ? 'Deselect All' : 'Select All'}
-        </button>
-      </div>
 
-      {/* Permission Tree */}
-      <div className="bg-gray-50/60 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
-        {/* Top controls row inside tree */}
-        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
-            <span>ℹ️</span>
-            <span>Changes take effect on the user's <span className="font-medium">next login</span>.</span>
-          </p>
-          <div className="flex items-center gap-3">
+        {/* Permission Tree */}
+        <div className="bg-gray-50/60 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-xl p-2 sm:p-2.5">
+          {/* Top controls row inside tree */}
+          <div className="flex items-center justify-end mb-1 pb-1 border-b border-gray-100 dark:border-gray-700/60 gap-3">
+            <button
+              onClick={toggleAll}
+              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              {allSelected ? 'Deselect All' : 'Select All'}
+            </button>
+            <span className="text-gray-300 dark:text-gray-600 text-xs">|</span>
             <button
               onClick={() => setExpandAll(v => v === false ? true : false)}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               {expandAll === false ? 'Expand All' : 'Collapse All'}
             </button>
           </div>
-        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-14 text-gray-400">
@@ -320,6 +319,7 @@ const UserAccessModal: React.FC<UserAccessModalProps> = ({ user, isOpen, onClose
             ))}
           </div>
         )}
+        </div>
       </div>
     </Modal>
   );

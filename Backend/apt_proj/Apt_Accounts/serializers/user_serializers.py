@@ -6,13 +6,19 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
+    role_id = serializers.SerializerMethodField()
     phone_number = serializers.SerializerMethodField()
     flat_number = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'name', 'username', 'email', 'role', 'phone_number', 'flat_number']
+        fields = ['id', 'first_name', 'name', 'username', 'email', 'role', 'role_id', 'phone_number', 'flat_number', 'date_joined', 'is_active', 'is_superuser']
+        
+    def get_role_id(self, obj):
+        if hasattr(obj, 'profile') and obj.profile.role:
+            return obj.profile.role.id
+        return None
         
     def get_role(self, obj):
         if obj.is_superuser:

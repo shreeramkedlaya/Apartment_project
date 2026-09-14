@@ -9,45 +9,83 @@ Environment control (set in shell / docker-compose):
 
 import warnings
 import os
-
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 from datetime import timedelta
 from pathlib import Path
-from corsheaders.defaults import default_headers  # type: ignore[import-untyped]
 
-# ─── Environment detection ────────────────────────────────────────────────────
-
-_env = os.environ.get("DJANGO_ENV", "").lower()
-IS_PRODUCTION = (
-    _env == "production" or os.environ.get("IS_PRODUCTION", "false").lower() == "true"
-)
-IS_TEST = (
-    _env == "test" or os.environ.get("IS_TEST", "false").lower() == "true"
-) and not IS_PRODUCTION
-IS_LOCAL = not IS_PRODUCTION and not IS_TEST
-
-# ─── Version ─────────────────────────────────────────────────────────────────
-# Versions removed as requested.
+import firebase_admin
+from corsheaders.defaults import default_headers
+from firebase_admin import credentials
 
 
 
-# ─── Paths & core ────────────────────────────────────────────────────────────
+# ─── Version Management ───────────────────────────────────────────────────────────────────
+MAIN_VERSION = 1
+SUB_VERSION = 0
+VERSION = f"{MAIN_VERSION}.{SUB_VERSION}"
+
+# ─── Paths ───────────────────────────────────────────────────────────────────
 
 BASE_DIR = Path(__file__).resolve().parent
+
+# ─── Environment ──────────────────────────────────────────────────────────────
+
+from dotenv import load_dotenv
+
+# 1. Load the main .env file to identify active environment (local or production)
+load_dotenv(BASE_DIR / ".env")
+
+active_env = os.environ.get("ACTIVE_ENV", "local").strip().lower()
+env_file = f".env.{active_env}"
+
+# 2. Load the specific environment file (.env.local or .env.production)
+load_dotenv(BASE_DIR / env_file, override=True)
+
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-change-this-before-deploying-to-production"
 )
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+DEBUG = os.getenv("DEBUG", "False").strip().lower() == "true"
 
-SUPER_ADMIN_PHONES = {
-    "+91 8296350150", # Add superadmin phone numbers here
-}
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "*").split(",")
+    if host.strip()
+]
+
+# ─── CORS ────────────────────────────────────────────────────────────────────
+
+CORS_ALLOW_ALL_ORIGINS = (
+    os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").strip().lower() == "true"
+)
+
+CORS_ALLOWED_ORIGINS = [
+    host.strip()
+    for host in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if host.strip()
+]
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "cache-control",
+    "pragma",
+]
+
+CORS_PREFLIGHT_MAX_AGE = 86400
+
+
+
+# ─── Django Core ─────────────────────────────────────────────────────────────
 
 ROOT_URLCONF = "urls"
 WSGI_APPLICATION = "wsgi.application"
@@ -55,67 +93,23 @@ ASGI_APPLICATION = "asgi.application"
 
 
 
-LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
-USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 157_286_400  # 150 MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 157_286_400  # 150 MB
 
-SECURE_BROWSER_XSS_FILTER = True
+# ─── Media & Static ──────────────────────────────────────────────────────────
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# ─── Security ────────────────────────────────────────────────────────────────
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-
-# ─── Per-environment settings ─────────────────────────────────────────────────
-
-if IS_LOCAL:
-    DEBUG = True
-    ALLOWED_HOSTS = ["*"]
-    MEDIA_ROOT = BASE_DIR / "media"
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
-    REDIS_HOST = "localhost"
-    REDIS_PORT = 6379
-    REDIS_DB = 0
-
-
-else:  # IS_PRODUCTION or IS_TEST
-    DEBUG = False
-    ALLOWED_HOSTS = [
-        h.strip()
-        for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-        if h.strip()
-    ]
-    MEDIA_ROOT = BASE_DIR / "media"
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        o.strip()
-        for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
-        if o.strip()
-    ]
-    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
-    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
-    REDIS_DB = int(os.environ.get("REDIS_DB", 0))
-
-
-
-# Derived Redis URL – computed after the per-env block sets host/port/db
-REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-
-# ─── Channels ─────────────────────────────────────────────────────────────────
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
-        },
-    },
-}
 
 # ─── Applications ─────────────────────────────────────────────────────────────
 
@@ -131,6 +125,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_celery_beat",
     "django_celery_results",
+    # Local
     "apt_proj",
     "apt_proj.Apt_Notifications",
 ]
@@ -144,6 +139,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+# ─── Templates ───────────────────────────────────────────────────────────────
 
 TEMPLATES = [
     {
@@ -159,28 +155,31 @@ TEMPLATES = [
     },
 ]
 
-# ─── Database – PostgreSQL ────────────────────────────────────────────────────
-
-_DB_BASE = {
-    "ENGINE": "django.db.backends.postgresql",
-    "USER": "postgres",
-    "PASSWORD": "test@123",
-    "HOST": "localhost",
-    "PORT": "5432",
-    "OPTIONS": {},
-}
-
-_DB_NAMES = [
-    # Add other dynamically routed database names here
-]
+# ─── Database ────────────────────────────────────────────────────────────────
 
 DATABASES = {
-    "default": {**_DB_BASE, "NAME": "apartment_db", "CONN_MAX_AGE": 600},
-    **{name: {**_DB_BASE, "NAME": name, "CONN_MAX_AGE": 600} for name in _DB_NAMES},
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "apartment_db"),
+        "USER": os.getenv("DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
+        "HOST": os.getenv("DB_HOST", "localhost"),
+        "PORT": os.getenv("DB_PORT", "5432"),
+        "CONN_MAX_AGE": 600,
+    }
 }
 
 
-# ─── Cache – Redis ────────────────────────────────────────────────────────────
+# ─── Redis ───────────────────────────────────────────────────────────────────
+
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
+
+REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
+
+# ─── Cache ───────────────────────────────────────────────────────────────────
 
 CACHES = {
     "default": {
@@ -188,13 +187,6 @@ CACHES = {
         "LOCATION": REDIS_URL,
     }
 }
-
-# ─── CORS ─────────────────────────────────────────────────────────────────────
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-CORS_PREFLIGHT_MAX_AGE = 86400
-CORS_ALLOW_HEADERS = list(default_headers) + ["cache-control", "pragma"]
 
 # ─── Django REST Framework ────────────────────────────────────────────────────
 
@@ -231,7 +223,19 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
-# ─── Celery ───────────────────────────────────────────────────────────────────
+# ─── Django Channels ─────────────────────────────────────────────────────────
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
+}
+
+
+# ─── Celery ──────────────────────────────────────────────────────────────────
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = "django-db"
@@ -243,24 +247,18 @@ CELERY_ENABLE_UTC = True
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_ACKS_LATE = True
-CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 min hard limit
-CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 min soft limit
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60
 CELERY_WORKER_PREFETCH_MULTIPLIER = 4
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-# Explicitly import top-level tasks.py (autodiscover_tasks only scans app packages)
-CELERY_IMPORTS = ("tasks",)
 
-# ─── Firebase Admin SDK ───────────────────────────────────────────────────────
-import firebase_admin
-from firebase_admin import credentials
 
-firebase_key_path = BASE_DIR / "firebase-adminsdk.json"
-if firebase_key_path.exists():
-    try:
-        # Check if already initialized to prevent errors on hot-reloads
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(str(firebase_key_path))
-            firebase_admin.initialize_app(cred)
-    except Exception as e:
-        print(f"Failed to initialize Firebase Admin: {e}")
+# ─── Firebase ────────────────────────────────────────────────────────────────
+
+FIREBASE_KEY_PATH = os.getenv("FIREBASE_KEY_PATH", "firebase-adminsdk.json")
+# ─── Application Configuration ───────────────────────────────────────────────
+
+SUPER_ADMIN_PHONES = {
+    "+91 8296350150",
+}

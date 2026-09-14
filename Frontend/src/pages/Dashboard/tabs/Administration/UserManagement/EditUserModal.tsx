@@ -1,12 +1,7 @@
-/**
- * pages/admin/UserManagement/EditUserModal.tsx
- * Modal for editing user profile details: name, phone, role, status, and password reset.
- * Roles are lazily loaded on modal open to minimize unnecessary DB reads.
- */
-
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Loader2, Lock, Phone, ShieldCheck, User as UserIcon, CheckCircle2, XCircle } from 'lucide-react';
+import { Phone, User as UserIcon, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import { useToast } from '@/context/ToastContext';
 import type { ManagedUser, Role, UpdateUserPayload } from '@/types/roles.types';
 import { fetchRoles, updateUser } from '../services/roles.service';
@@ -25,8 +20,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
   const [phoneNumber, setPhoneNumber] = useState('');
   const [roleId, setRoleId] = useState<number | string>('');
   const [isActive, setIsActive] = useState(true);
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
@@ -40,8 +33,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
       setPhoneNumber(user.phone_number || '');
       setRoleId(user.role_id ?? '');
       setIsActive(user.is_active ?? true);
-      setPassword('');
-      setShowPassword(false);
       setErrorMessage(null);
     }
   }, [user, isOpen]);
@@ -82,10 +73,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
       is_active: isActive,
     };
 
-    if (password.trim()) {
-      payload.password = password.trim();
-    }
-
     try {
       await updateUser(user.id, payload);
       showToast('User updated successfully', 'success');
@@ -106,7 +93,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
       isOpen={isOpen}
       onClose={onClose}
       title={`Edit User: ${user.name || user.username}`}
-      description="Update account details, role permissions, or reset security credentials."
+      description="Update account details, role permissions, or active status."
       width="small"
     >
       <form onSubmit={handleSubmit} className="space-y-4 p-1">
@@ -156,52 +143,23 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
             Role / User Type
           </label>
-          <div className="relative">
-            <ShieldCheck className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <select
-              value={roleId}
-              onChange={(e) => setRoleId(e.target.value)}
-              disabled={loadingRoles}
-              className="w-full pl-10 pr-8 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white appearance-none cursor-pointer"
-            >
-              <option value="">Resident (No administrative role)</option>
-              {roles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} {r.status !== 'active' ? `(${r.status})` : ''}
-                </option>
-              ))}
-            </select>
-            {loadingRoles && (
-              <Loader2 className="w-4 h-4 text-blue-500 animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
-            )}
-          </div>
+          <CustomDropdown
+            options={[
+              { value: '', label: 'Resident (No administrative role)' },
+              ...roles.map((r) => ({
+                value: r.id,
+                label: r.name + (r.status !== 'active' ? ` (${r.status})` : ''),
+              })),
+            ]}
+            value={roleId}
+            onChange={(val) => setRoleId(val)}
+            disabled={loadingRoles}
+            placeholder={loadingRoles ? 'Loading roles...' : 'Select Role'}
+            className="w-full"
+          />
           <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
             Assigning a role grants the administrative tabs configured under that role.
           </p>
-        </div>
-
-        {/* Password Reset (Optional) */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
-            Reset Password <span className="text-gray-400 font-normal lowercase">(optional)</span>
-          </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Leave blank to keep existing password"
-              className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
         </div>
 
         {/* Account Status Toggle */}
@@ -213,11 +171,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
             <button
               type="button"
               onClick={() => setIsActive(true)}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${
-                isActive
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${isActive
                   ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
-              }`}
+                }`}
             >
               <CheckCircle2 className={`w-4 h-4 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`} />
               Active
@@ -225,11 +182,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
             <button
               type="button"
               onClick={() => setIsActive(false)}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${
-                !isActive
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${!isActive
                   ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 shadow-sm'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
-              }`}
+                }`}
             >
               <XCircle className={`w-4 h-4 ${!isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`} />
               Blocked

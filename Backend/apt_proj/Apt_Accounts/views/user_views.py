@@ -3,7 +3,7 @@ import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -20,7 +20,7 @@ class AssignRoleView(APIView):
     POST /accounts/users/<user_id>/assign-role/
     Body: { "role_id": <int> | null }
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, user_id):
         return get_object_or_404(User, pk=user_id)
@@ -53,7 +53,7 @@ class UserAPIView(APIView):
     GET /accounts/users/<pk>/     → Get single user detail
     PUT /accounts/users/<pk>/     → Update user name, phone, role, status, password
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         return get_object_or_404(
@@ -196,7 +196,7 @@ class PermissionsTreeView(APIView):
     """
     GET /accounts/permissions/tree/  → Return the full permissions.json tree
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -222,7 +222,7 @@ class UserPermissionManagerView(APIView):
            { "action": "reset" }  → clears user_tabs (reverts to role-only)
            { "user_tabs": [...] } → replaces user_tabs with the given list
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         return get_object_or_404(User, pk=pk)

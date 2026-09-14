@@ -12,11 +12,11 @@ import { useAuth } from '@/context/AuthContext';
 const CategoriesPage: React.FC = () => {
   const tableRef = useRef<DataTableRef>(null);
   const { showToast } = useToast();
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
 
-  const canAdd = user?.permissionTabs?.includes('helpdesk.categories.add') || user?.role === 'admin';
-  const canEdit = user?.permissionTabs?.includes('helpdesk.categories.edit') || user?.role === 'admin';
-  const canDelete = user?.permissionTabs?.includes('helpdesk.categories.delete') || user?.role === 'admin';
+  const canAdd = hasPermission('helpdesk.categories.add');
+  const canEdit = hasPermission('helpdesk.categories.edit');
+  const canDelete = hasPermission('helpdesk.categories.delete');
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);

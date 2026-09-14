@@ -77,6 +77,9 @@ export interface DataTableProps {
     onEdit?: (row: any) => void;
     onDelete?: (row: any) => void;
     extraRowActions?: (row: any) => React.ReactNode;
+    deleteText?: string | ((row: any) => string);
+    deleteConfirmTitle?: string | ((row: any) => string);
+    deleteConfirmMessage?: string | ((row: any) => string);
     
     // Expandable Rows
     expandable?: boolean;

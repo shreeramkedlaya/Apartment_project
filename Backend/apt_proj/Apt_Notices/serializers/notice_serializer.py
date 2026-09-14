@@ -7,7 +7,7 @@ class NoticeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notice
         fields = '__all__'
-        read_only_fields = ['status', 'created_at', 'updated_at', 'created_by']
+        read_only_fields = ['created_at', 'updated_at', 'created_by']
 
     created_by = serializers.CharField(source='created_by.username', read_only=True)
     is_editable = serializers.SerializerMethodField()

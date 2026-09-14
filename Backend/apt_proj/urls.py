@@ -5,4 +5,5 @@ urlpatterns = [
     path("issues/", include("apt_proj.Apt_Issues.urls")),
     path("notices/", include("apt_proj.Apt_Notices.urls")),
     path("dashboard/", include("apt_proj.Apt_Dashboard.urls")),
+    path("settings/", include('apt_proj.Apt_Settings.urls'))
 ]

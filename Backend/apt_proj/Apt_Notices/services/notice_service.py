@@ -29,9 +29,24 @@ def _trigger_publish_events(notice):
 
 def create_notice(data, user, attachments=None):
     """
-    Creates a Draft notice and binds attachments.
+    Creates a notice with appropriate status (Published, Scheduled, or Draft)
+    and binds attachments.
     """
-    data['status'] = Notice.Status.DRAFT
+    from django.db import transaction
+
+    # Determine status based on intent and publish_date
+    desired_status = data.get('status', Notice.Status.PUBLISHED)
+    publish_date = data.get('publish_date')
+
+    if desired_status == Notice.Status.DRAFT:
+        data['status'] = Notice.Status.DRAFT
+    elif publish_date and publish_date > timezone.now():
+        data['status'] = Notice.Status.SCHEDULED
+    else:
+        data['status'] = Notice.Status.PUBLISHED
+        if not publish_date:
+            data['publish_date'] = timezone.now()
+
     data['created_by'] = user
     notice = Notice.objects.create(**data)
 
@@ -42,6 +57,11 @@ def create_notice(data, user, attachments=None):
                 file=file_data.get('file'),
                 file_type=file_data.get('file_type', '')
             )
+
+    # If created directly as Published, dispatch notification events
+    if notice.status == Notice.Status.PUBLISHED:
+        transaction.on_commit(lambda n=notice: _trigger_publish_events(n))
+
     return notice
 
 def update_notice(notice, data, user):
@@ -96,8 +116,10 @@ def cancel_notice(notice, user):
 
 def approve_notice(notice, user):
     """
-    Marks a pending publication request as approved and transitions out of Draft.
+    Marks a pending publication request as approved and transitions notice to Published or Scheduled.
     """
+    from django.db import transaction
+
     approval = notice.approvals.filter(status=NoticeApproval.Status.PENDING).last()
     if not approval:
         raise ValidationError("No pending approval request found for this notice.")
@@ -107,6 +129,16 @@ def approve_notice(notice, user):
     approval.decision_at = timezone.now()
     approval.save()
 
+    # Transition notice to Published or Scheduled
+    if notice.publish_date and notice.publish_date > timezone.now():
+        notice.status = Notice.Status.SCHEDULED
+    else:
+        notice.status = Notice.Status.PUBLISHED
+        if not notice.publish_date:
+            notice.publish_date = timezone.now()
+        transaction.on_commit(lambda n=notice: _trigger_publish_events(n))
+
+    notice.save()
     return notice
 
 def reject_notice(notice, user, reason):

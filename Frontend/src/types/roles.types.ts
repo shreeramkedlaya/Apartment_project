@@ -72,8 +72,10 @@ export interface ManagedUser {
   date_joined: string;
   phone_number: string | null;
   role_id?: number | null;
-  role_name: string;
-  flat: ManagedUserFlat | null;
+  role?: string;
+  role_name?: string;
+  flat_number?: string;
+  flat?: ManagedUserFlat | null;
 }
 
 export interface UpdateUserPayload {

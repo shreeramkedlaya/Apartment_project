@@ -13,7 +13,7 @@ import RequestDetailsPanel from './RequestDetailsPanel';
 import UpdateStatusModal from './UpdateStatusModal';
 
 const RequestsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const tableRef = useRef<DataTableRef>(null);
   const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<HelpdeskRequest | null>(null);
@@ -41,10 +41,10 @@ const RequestsPage: React.FC = () => {
     return () => window.removeEventListener('ISSUES_UPDATED', handleIssuesUpdated);
   }, [selectedRequest]);
 
-  const canAdd = user?.permissionTabs?.includes('helpdesk.requests.add') || user?.role === 'admin';
-  const canEdit = user?.permissionTabs?.includes('helpdesk.requests.edit') || user?.role === 'admin';
-  const canDelete = user?.permissionTabs?.includes('helpdesk.requests.delete') || user?.role === 'admin';
-  const canResolve = user?.permissionTabs?.includes('helpdesk.requests.resolve_close') || user?.role === 'admin';
+  const canAdd = hasPermission('helpdesk.requests.add');
+  const canEdit = hasPermission('helpdesk.requests.edit');
+  const canDelete = hasPermission('helpdesk.requests.delete');
+  const canResolve = hasPermission('helpdesk.requests.resolve_close');
   const canManageTickets = canResolve || canEdit;
 
   const columns: Column[] = [
@@ -72,7 +72,7 @@ const RequestsPage: React.FC = () => {
       accessor: (i: HelpdeskRequest) => i.is_flat_specific ? (i.flat_number || 'Flat') : 'Common Area',
     },
     {
-      header: 'Raised By',
+      header: 'Created By',
       type: 'custom',
       accessor: (i: HelpdeskRequest) => i.created_by?.name || 'Resident',
     },

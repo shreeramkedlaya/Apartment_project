@@ -129,16 +129,18 @@ export function useDataTable({
   }, [filtered, sortConfig, serverSide]);
 
   // ── Paginate ──
-  const totalPages = serverSide ? Math.max(1, Math.ceil(totalItems / pageSize)) : Math.max(1, Math.ceil(sorted.length / pageSize));
+  const safeSorted = sorted || [];
+  const totalPages = serverSide ? Math.max(1, Math.ceil(totalItems / pageSize)) : Math.max(1, Math.ceil(safeSorted.length / pageSize));
   const paginated = useMemo(() => {
-    if (serverSide) return sorted;
+    if (serverSide) return safeSorted;
     const start = (page - 1) * pageSize;
-    return sorted.slice(start, start + pageSize);
-  }, [sorted, page, pageSize, serverSide]);
+    return safeSorted.slice(start, start + pageSize);
+  }, [safeSorted, page, pageSize, serverSide]);
 
   // ── Selection ──
-  const allSelected = paginated.length > 0 && paginated.every((_, i) => selected.has(i));
-  const someSelected = paginated.some((_, i) => selected.has(i)) && !allSelected;
+  const safePaginated = paginated || [];
+  const allSelected = safePaginated.length > 0 && safePaginated.every((_, i) => selected.has(i));
+  const someSelected = safePaginated.some((_, i) => selected.has(i)) && !allSelected;
 
   const onSelectionRef = useRef(onSelectionChange);
   useEffect(() => { onSelectionRef.current = onSelectionChange; }, [onSelectionChange]);

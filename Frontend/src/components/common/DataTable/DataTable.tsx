@@ -123,9 +123,10 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
       }
 
       const res = await api(params as { page: number; page_size: number; search?: string; sort?: string });
-      setTableData(res.results);
-      if (res.stats) setBackendStats(res.stats);
-      if (res.count !== undefined) setTotalItems(res.count);
+      const results = Array.isArray(res?.results) ? res.results : (Array.isArray(res) ? res : []);
+      setTableData(results);
+      if (res?.stats) setBackendStats(res.stats);
+      if (res?.count !== undefined) setTotalItems(res.count);
     } catch (error) {
       console.error("DataTable fetch error:", error);
       showToast("Failed to fetch data.", "error");

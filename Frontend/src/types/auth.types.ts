@@ -6,7 +6,7 @@ export interface AuthUser {
   role: UserRole;
   name: string;
   email?: string;
-  permissionTabs?: string[];
+  permissionTabs?: string[] | 'All';
   // Resident-specific (optional)
   flatNumber?: string;
   tower?: string;
@@ -31,6 +31,7 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   isResident: boolean;
   isAdmin: boolean;
+  hasPermission: (permissionId?: string) => boolean;
   login: (access: string, refresh?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshPermissions: () => Promise<void>;

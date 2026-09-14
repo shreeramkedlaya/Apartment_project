@@ -7,6 +7,7 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
   width?: 'small' | 'large' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
@@ -19,6 +20,7 @@ export default function Modal({
   onClose,
   title,
   description,
+  icon,
   children,
   footer,
   width,
@@ -70,11 +72,18 @@ export default function Modal({
       <div className={`relative w-full ${widthClass} max-h-[90vh] bg-white dark:bg-gray-900 shadow-2xl flex flex-col rounded-2xl animate-in zoom-in-95 duration-200`}>
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
-            {description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
+          <div className="flex items-start gap-4">
+            {icon && (
+              <div className="flex-shrink-0 p-2 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30">
+                {icon}
+              </div>
             )}
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+              {description && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -84,10 +93,8 @@ export default function Modal({
           </button>
         </div>
 
-        {/* Body (Scrollable with comfortable bottom padding for popovers) */}
         {/* Body (Scrollable) */}
         <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
-
           {children}
         </div>
 

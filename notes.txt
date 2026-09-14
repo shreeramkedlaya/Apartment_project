@@ -1,0 +1,1 @@
+Auto category based on title - maybe re-arrange category and name/desc

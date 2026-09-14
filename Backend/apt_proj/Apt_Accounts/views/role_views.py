@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from apt_proj.pagination import StatsPagination
@@ -18,7 +18,7 @@ class RoleAPIView(APIView):
     PUT    /accounts/roles/<pk>/    → Update role
     DELETE /accounts/roles/<pk>/    → Delete role
     """
-    permission_classes = [AllowAny]  # Tighten to IsAuthenticated in production
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         return get_object_or_404(Role, pk=pk)

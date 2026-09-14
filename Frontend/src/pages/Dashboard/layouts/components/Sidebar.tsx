@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LogOut, ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { NAVIGATION } from '@/config/navigation';
@@ -73,45 +73,32 @@ const Sidebar: React.FC<SidebarProps> = ({
   handleLogout,
   toggleSidebar,
 }) => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [openTabs, setOpenTabs] = useState<Set<string>>(() => new Set([activeTab]));
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (profileMenuRef.current && !profileMenuRef.current.contains(target)) {
-        setProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // userPerms can be array of numbers (old) or array of strings (new dot-notation). 
-  // We'll normalize to string for the includes check.
-  const userPerms = useMemo(() => {
-    return (user?.permissionTabs || []).map((p: any) => String(p));
-  }, [user]);
-
   // Filter tabs based on permission
   const filteredTabs = useMemo(() => {
+    // If super admin / All permissions, return all navigation tabs directly
+    if (user?.permissionTabs === "All") {
+      return NAVIGATION;
+    }
+
     // If no permissions array, they should only see the Dashboard
     const dashboardTab = NAVIGATION.find(t => t.id === 'dashboard');
-    if (userPerms.length === 0) return dashboardTab ? [dashboardTab] : [];
+    if (!user?.permissionTabs || user.permissionTabs.length === 0) {
+      return dashboardTab ? [dashboardTab] : [];
+    }
 
     return NAVIGATION.map(tab => {
       if (tab.id === 'dashboard') return tab; // Dashboard always visible
 
       if (!tab.subTabs) {
-        return userPerms.includes(String(tab.permissionId)) ? tab : null;
+        return hasPermission(tab.permissionId) ? tab : null;
       }
-      const allowedSubs = tab.subTabs.filter(s => userPerms.includes(String(s.permissionId)));
+      const allowedSubs = tab.subTabs.filter(s => hasPermission(s.permissionId));
       if (allowedSubs.length === 0) return null;
       return { ...tab, subTabs: allowedSubs };
     }).filter(Boolean) as TabConfig[];
-  }, [userPerms]);
+  }, [user, hasPermission]);
 
   const handleTabClick = (tab: TabConfig) => {
     const hasSubTabs = (tab.subTabs?.length ?? 0) > 0;
@@ -240,63 +227,31 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </nav>
 
-      {/* User Profile Card with Popover Menu */}
-      <div ref={profileMenuRef} className="p-3 border-t border-gray-100 dark:border-gray-800 shrink-0 relative">
-        {/* Popover Menu */}
-        {profileMenuOpen && (
-          <div className="absolute bottom-full mb-2 left-3 right-3 sm:right-auto sm:w-60 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{user?.name || 'User'}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-block px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded text-[9px] font-semibold uppercase tracking-wider">
-                  {user?.role || 'Resident'}
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-400 truncate mt-1">
-                {user?.email || user?.phone || 'No email associated'}
-              </p>
-            </div>
-
-            <div className="pt-1 px-1">
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex items-center gap-2 transition-colors font-medium"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                Logout
-              </button>
-            </div>
-          </div>
-        )}
-
+      {/* User Profile Card - Display Only */}
+      <div className="p-3 border-t border-gray-100 dark:border-gray-800 shrink-0 relative">
         {isSidebarOpen ? (
-          <div
-            onClick={() => setProfileMenuOpen(prev => !prev)}
-            className="flex items-center gap-3 p-2 rounded-xl bg-gray-50/80 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800/80 transition-all cursor-pointer group"
-          >
-            <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-xs uppercase shrink-0 border border-blue-200 dark:border-blue-800/60">
-              {(user?.name || 'U').substring(0, 1).toUpperCase()}
-            </div>
-
-            <div className="min-w-0 flex-1 py-0.5">
-              <span className="text-xs font-semibold text-gray-900 dark:text-white truncate block">
-                {user?.name || 'User'}
-              </span>
-              <div className="mt-0.5 mb-1 flex">
-                <span className="inline-block px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded text-[9px] font-semibold uppercase tracking-wider truncate max-w-full">
+          <div className="flex items-center justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm uppercase border border-blue-200 dark:border-blue-800/60 shrink-0">
+                {(user?.name || 'U').substring(0, 1).toUpperCase()}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                  {user?.name || 'User'}
+                </span>
+                {user?.phone && (
+                  <span className="text-xs text-gray-600 dark:text-gray-300 font-mono truncate">
+                    {user.phone}
+                  </span>
+                )}
+                <span className="text-[11px] text-gray-400 dark:text-gray-400 truncate capitalize font-medium">
                   {user?.role || 'Resident'}
                 </span>
               </div>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-none">
-                {user?.email || user?.phone || 'No email'}
-              </p>
             </div>
 
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleLogout();
-              }}
+              onClick={handleLogout}
               className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0"
               title="Logout"
             >
@@ -306,9 +261,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <div className="flex flex-col items-center gap-2">
             <div
-              onClick={() => setProfileMenuOpen(prev => !prev)}
-              className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-xs uppercase border border-blue-200 dark:border-blue-800/60 cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all"
-              title={`${user?.name || 'User'} • ${user?.role || 'Resident'}`}
+              className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-xs uppercase border border-blue-200 dark:border-blue-800/60"
+              title={`${user?.name || 'User'} • ${user?.role || 'Resident'}${user?.phone ? ` • ${user.phone}` : ''}`}
             >
               {(user?.name || 'U').substring(0, 1).toUpperCase()}
             </div>

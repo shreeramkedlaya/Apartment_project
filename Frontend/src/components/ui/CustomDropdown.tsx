@@ -121,8 +121,8 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
     const spaceBelow = viewportHeight - rect.bottom - 10;
     const spaceAbove = rect.top - 10;
 
-    // Minimum comfortable dropdown height
-    const preferredHeight = 220;
+    // Height for approximately 5 items (~36px each) + padding
+    const preferredHeight = 190;
     const shouldFlip = spaceBelow < preferredHeight && spaceAbove > spaceBelow;
 
     const placement: 'bottom' | 'top' = shouldFlip ? 'top' : 'bottom';
@@ -291,22 +291,20 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
         type="button"
         disabled={opt.disabled}
         onClick={() => handleSelect(opt.value)}
-        className={`w-full px-3 py-2 text-left rounded-lg text-sm flex items-center justify-between gap-2 transition-all ${
-          opt.disabled
+        className={`w-full px-3 py-2 text-left rounded-lg text-sm flex items-center justify-between gap-2 transition-all ${opt.disabled
             ? 'opacity-40 cursor-not-allowed'
             : selected
-            ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 font-semibold'
-            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/70'
-        }`}
+              ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 font-semibold'
+              : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/70'
+          }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
           {multiple && (
             <div
-              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                selected
+              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selected
                   ? 'bg-blue-600 border-blue-600 text-white'
                   : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
-              }`}
+                }`}
             >
               {selected && <Check className="w-3 h-3 stroke-[3]" />}
             </div>
@@ -343,15 +341,14 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full min-h-[42px] px-3.5 py-2.5 text-left bg-white dark:bg-gray-900 border rounded-xl flex items-center justify-between gap-2 transition-all outline-none shadow-xs select-none ${
-          disabled
+        className={`w-full min-h-[42px] px-3.5 py-2.5 text-left bg-white dark:bg-gray-900 border rounded-xl flex items-center justify-between gap-2 transition-all outline-none shadow-xs select-none ${disabled
             ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-800'
             : isOpen
-            ? 'border-blue-500 ring-2 ring-blue-500/20'
-            : error
-            ? 'border-red-500 ring-2 ring-red-500/10'
-            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-        }`}
+              ? 'border-blue-500 ring-2 ring-blue-500/20'
+              : error
+                ? 'border-red-500 ring-2 ring-red-500/10'
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+          }`}
       >
         <div className="flex-1 truncate">{renderTriggerContent()}</div>
 

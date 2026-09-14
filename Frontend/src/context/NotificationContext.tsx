@@ -13,6 +13,46 @@ export interface AppNotification {
   read: boolean;
 }
 
+/**
+ * Synthesize a modern, pleasant 2-tone notification chime using the browser's
+ * Web Audio API. 100% offline, zero audio assets or external network calls needed.
+ */
+export const playNotificationChime = () => {
+  try {
+    const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtxClass) return;
+
+    const audioCtx = new AudioCtxClass();
+    const now = audioCtx.currentTime;
+
+    // Tone 1: Gentle pleasant harmonic (E5 - 659.25 Hz)
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(659.25, now);
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.28);
+
+    // Tone 2: Bright uplifting resolution chime (A5 - 880 Hz)
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880, now + 0.1);
+    gain2.gain.setValueAtTime(0.14, now + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start(now + 0.1);
+    osc2.stop(now + 0.5);
+  } catch {
+    // Gracefully ignore browsers blocking audio before user interaction
+  }
+};
+
 interface NotificationContextType {
   isConnected: boolean;
   notifications: AppNotification[];
@@ -95,6 +135,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           if (payload.type === 'notice_published') {
             const title = payload.title || 'New Notice';
             
+            // Play offline notification chime
+            playNotificationChime();
+
             // Add to notification list
             const newNotif: AppNotification = {
               id: Date.now().toString(),
@@ -123,6 +166,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           } else if (payload.type === 'issue_updated') {
             const title = payload.title || 'Issue Updated';
             
+            // Play offline notification chime
+            playNotificationChime();
+
             // Add to notification list
             const newNotif: AppNotification = {
               id: Date.now().toString(),

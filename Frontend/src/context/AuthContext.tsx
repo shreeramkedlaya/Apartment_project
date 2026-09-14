@@ -4,7 +4,6 @@ import { jwtDecode } from 'jwt-decode';
 import type { AuthContextValue, AuthUser } from '@/types/auth.types';
 import { saveTokens, clearTokens, getValidToken } from '@/services/core/checkValidityToken';
 import { fetchMe } from '@/services/auth/auth.service';
-import { fetchPermissionsTree } from '@/pages/Dashboard/tabs/Administration/services/roles.service';
 
 interface CustomJwtPayload {
   user_data: {
@@ -24,44 +23,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const hasPermission = useCallback((permissionId?: string): boolean => {
+    if (!permissionId) return true;
+    if (user?.permissionTabs === "All") return true;
+    if (Array.isArray(user?.permissionTabs)) {
+      return user.permissionTabs.includes(permissionId);
+    }
+    return false;
+  }, [user]);
+
   const refreshPermissions = useCallback(async (existingUser?: AuthUser) => {
     try {
       const meData = await fetchMe();
       
-      let permissionTabs = meData.permission_tabs || [];
-      if (permissionTabs === "All") {
-        try {
-          const tree = await fetchPermissionsTree();
-          const flattenPermissions = (nodes: any[]): string[] => {
-            const result: string[] = [];
-            for (const node of nodes) {
-              result.push(node.id);
-              if (node.children) {
-                result.push(...flattenPermissions(node.children));
-              }
-            }
-            return result;
-          };
-          permissionTabs = flattenPermissions(tree);
-        } catch (err) {
-          console.error("Failed to fetch full permissions tree for admin:", err);
-          permissionTabs = [];
-        }
-      }
-
-      const hasAdminPerms = permissionTabs.some((t: string) => 
-        t.startsWith('administration.') || t.startsWith('community.') || t.startsWith('helpdesk.')
-      );
-      const resolvedRole = meData.role || (hasAdminPerms ? 'admin' : 'resident');
-
       const updatedUser: AuthUser = {
         uid: meData.id.toString(),
         phone: meData.phone_number || meData.name,
-        role: resolvedRole,
+        role: meData.role || 'resident',
         name: meData.name,
         email: meData.email || '',
         flatNumber: meData.flat_number || '',
-        permissionTabs: permissionTabs,
+        permissionTabs: meData.permission_tabs || [],
       };
       
       setUser(updatedUser);
@@ -137,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: Boolean(user),
     isResident: user?.role === 'resident',
     isAdmin: user?.role === 'admin' || user?.role === 'manager',
+    hasPermission,
     login,
     logout,
     refreshPermissions,

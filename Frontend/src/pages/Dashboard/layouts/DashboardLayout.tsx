@@ -19,16 +19,19 @@ const RequestsPage = lazy(() => import('@/pages/Dashboard/tabs/Helpdesk/Requests
 const CategoriesPage = lazy(() => import('@/pages/Dashboard/tabs/Helpdesk/CategoriesPage'));
 
 // Resident
-const ProfilePage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/ProfilePage'));
 const VehiclesPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/VehiclesPage'));
 const ReceiptsPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/ReceiptsPage'));
 
 // Community
 const NoticesPage = lazy(() => import('@/pages/Dashboard/tabs/NoticeBoard/NoticeBoardPage'));
+const NoticeApprovalsPage = lazy(() => import('@/pages/Dashboard/tabs/NoticeBoard/NoticeApprovalsPage'));
 const AmenitiesPage = lazy(() => import('@/pages/Dashboard/tabs/Community/AmenitiesPage'));
 
 // Emergency
 const EmergencyPage = lazy(() => import('@/pages/Dashboard/tabs/Emergency/EmergencyPage'));
+
+// Settings
+const SettingsPage = lazy(() => import('@/pages/Dashboard/tabs/Settings/SettingsPage'));
 
 const QuickLoader = () => (
   <div className="flex items-center justify-center py-12 h-full">
@@ -40,24 +43,23 @@ export default function DashboardLayout() {
   const { activeTab, setActiveTab, activeSubTab, setActiveSubTab, isSidebarOpen, setIsSidebarOpen } = useDashboardNavigation();
 
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, user, hasPermission } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const userPerms = user?.permissionTabs?.map(String) || [];
 
   // Render the correct component based on activeTab and activeSubTab
   const renderContent = useCallback(() => {
     // Route Protection
-    if (userPerms.length > 0) {
+    if (user?.permissionTabs !== "All" && activeTab !== 'dashboard' && activeTab !== 'settings') {
       const matchedTab = NAVIGATION.find(t => t.id === activeTab);
       if (!matchedTab) return <PlaceholderPage title="Not Found" />;
 
       if (matchedTab.subTabs) {
         const matchedSub = matchedTab.subTabs.find(s => s.id === activeSubTab);
-        if (!matchedSub || !userPerms.includes(String(matchedSub.permissionId))) {
+        if (!matchedSub || !hasPermission(matchedSub.permissionId)) {
           return <Dashboard />; // Unauthorized, fallback to dashboard
         }
       } else {
-        if (!userPerms.includes(String(matchedTab.permissionId))) {
+        if (!hasPermission(matchedTab.permissionId)) {
           return <Dashboard />;
         }
       }
@@ -71,7 +73,6 @@ export default function DashboardLayout() {
         if (activeSubTab === 'roles') return <RolesPage />;
         return <PlaceholderPage title="Administration" />;
       case 'resident':
-        if (activeSubTab === 'profile') return <ProfilePage />;
         if (activeSubTab === 'vehicles') return <VehiclesPage />;
         if (activeSubTab === 'receipts') return <ReceiptsPage />;
         return <PlaceholderPage title={`Resident Services: ${activeSubTab}`} />;
@@ -81,14 +82,17 @@ export default function DashboardLayout() {
         return <PlaceholderPage title={`Helpdesk: ${activeSubTab}`} />;
       case 'community':
         if (activeSubTab === 'notices') return <NoticesPage />;
+        if (activeSubTab === 'notice-approvals') return <NoticeApprovalsPage />;
         if (activeSubTab === 'amenities') return <AmenitiesPage />;
         return <PlaceholderPage title={`Community: ${activeSubTab}`} />;
       case 'emergency':
         return <EmergencyPage />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <PlaceholderPage title={activeTab} />;
     }
-  }, [activeTab, activeSubTab]);
+  }, [activeTab, activeSubTab, hasPermission, user]);
 
   const handleLogout = async () => {
     try {
@@ -102,6 +106,7 @@ export default function DashboardLayout() {
   // Determine dynamic page title for Header
   const getPageTitle = () => {
     if (activeTab === 'dashboard') return 'Dashboard';
+    if (activeTab === 'community' && activeSubTab === 'notice-approvals') return 'Notice Approvals';
     if (activeTab === 'administration' && activeSubTab === 'roles') return 'Role Management';
     if (activeTab === 'administration' && activeSubTab === 'users') return 'User Management';
 

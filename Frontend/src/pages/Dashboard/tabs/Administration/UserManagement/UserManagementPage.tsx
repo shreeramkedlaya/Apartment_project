@@ -17,7 +17,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { fetchUsers, bulkDeleteUsers, bulkUpdateUsers } from '../services/roles.service';
+import { fetchUsers, deleteUser, bulkDeleteUsers, bulkUpdateUsers } from '../services/roles.service';
 import EditUserModal from './EditUserModal';
 import UserAccessModal from './UserAccessModal';
 
@@ -30,15 +30,15 @@ const STATUS_BADGE: Record<string, string> = {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const UserManagementPage = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, hasPermission } = useAuth();
   const { showToast } = useToast();
   const tableRef = useRef<DataTableRef>(null);
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [accessUser, setAccessUser] = useState<ManagedUser | null>(null);
 
-  const canAdd = currentUser?.permissionTabs?.includes('administration.users.add') || currentUser?.role === 'admin';
-  const canEdit = currentUser?.permissionTabs?.includes('administration.users.edit') || currentUser?.role === 'admin';
-  const canDelete = currentUser?.permissionTabs?.includes('administration.users.delete') || currentUser?.role === 'admin';
+  const canAdd = hasPermission('administration.users.add');
+  const canEdit = hasPermission('administration.users.edit');
+  const canDelete = hasPermission('administration.users.delete');
 
   const computeStats = (_data: ManagedUser[], backendStats?: any) => {
     if (!backendStats) return [];
@@ -68,23 +68,25 @@ const UserManagementPage = () => {
       header: 'Flat',
       type: 'icon-text',
       icon: Home,
-      accessor: (u: ManagedUser) => u.flat ? `Block ${u.flat.block} – ${u.flat.number}` : '',
+      accessor: (u: ManagedUser) => u.flat_number || (u.flat ? `Block ${u.flat.block} – ${u.flat.number}` : ''),
+      sortKey: 'flat_number',
+      sortable: true,
     },
     {
       header: 'Role',
       type: 'badge',
       accessor: (u: ManagedUser) => {
-        if (u.is_superuser) return { label: 'Super Admin', status: 'super' };
-        if (u.role_name !== 'Resident') return { label: u.role_name, status: 'active' };
-        return null;
+        const r = u.role || 'Resident';
+        const isSuper = u.is_superuser || r.toLowerCase().includes('super admin');
+        return { label: r, status: isSuper ? 'super' : 'active' };
       },
       badgeConfig: {
-        super: { label: 'Super Admin', className: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800' },
+        super: { label: '', className: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800' },
         active: { label: '', className: STATUS_BADGE.active },
         inactive: { label: '', className: STATUS_BADGE.inactive },
         draft: { label: '', className: STATUS_BADGE.draft },
       },
-      sortKey: 'role_name',
+      sortKey: 'role',
       sortable: true,
     },
     {
@@ -149,7 +151,7 @@ const UserManagementPage = () => {
         ref={tableRef}
         api={fetchUsers}
         columns={columns}
-        defaultVisibleColumns={['User', 'Phone', 'Role', 'Joined']}
+        defaultVisibleColumns={['User', 'Phone', 'Flat', 'Role', 'Joined']}
         computeStats={computeStats}
         enableSearch
         searchPlaceholder="Search by name, phone, flat..."
@@ -160,7 +162,7 @@ const UserManagementPage = () => {
         exportable={true}
         bulkOperations={canEdit ? bulkOperations : undefined}
         onEdit={canEdit ? (u: ManagedUser) => setEditUser(u) : undefined}
-        onDelete={canDelete ? (u: ManagedUser) => console.log('Delete user:', u) : undefined}
+        deleteApi={canDelete ? deleteUser : undefined}
         isActionDisabled={(u: ManagedUser) => u.is_superuser || String(u.id) === currentUser?.uid}
         extraRowActions={(u: ManagedUser) => (
           (u.is_superuser || String(u.id) === currentUser?.uid || !canEdit) ? null : (

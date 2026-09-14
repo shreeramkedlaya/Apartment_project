@@ -11,6 +11,10 @@ from ..services import notice_service
 from ..services.targeting_service import get_targeted_notices_for_user
 
 class ResidentNoticeListAPIView(APIView):
+    """
+    For resident: show all published notices targeted to them.
+    URL: GET /api/notices/resident/
+    """
     def get(self, request):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)

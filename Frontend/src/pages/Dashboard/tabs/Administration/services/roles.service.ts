@@ -12,56 +12,59 @@ import type {
 // ─── Roles CRUD ──────────────────────────────────────────────────────────────
 
 export async function fetchRoles(params?: any): Promise<any> {
-  const { data } = await axiosInstance.get('/accounts/roles/', { params, skipAuth: true });
+  const { data } = await axiosInstance.get('/accounts/roles/', { params });
   return data;
 }
 
 export async function fetchRole(id: number): Promise<Role> {
-  const { data } = await axiosInstance.get(`/accounts/roles/${id}/`, { skipAuth: true });
+  const { data } = await axiosInstance.get(`/accounts/roles/${id}/`);
   return data;
 }
 
 export async function createRole(payload: CreateRolePayload): Promise<Role> {
-  const { data } = await axiosInstance.post('/accounts/roles/', payload, { skipAuth: true });
+  const { data } = await axiosInstance.post('/accounts/roles/', payload);
   return data;
 }
 
 export async function updateRole(id: number, payload: UpdateRolePayload): Promise<Role> {
-  const { data } = await axiosInstance.put(`/accounts/roles/${id}/`, payload, { skipAuth: true });
+  const { data } = await axiosInstance.put(`/accounts/roles/${id}/`, payload);
   return data;
 }
 
 export async function deleteRole(id: number): Promise<void> {
-  await axiosInstance.delete(`/accounts/roles/${id}/`, { skipAuth: true });
+  await axiosInstance.delete(`/accounts/roles/${id}/`);
 }
 
 // ─── Permissions Tree ─────────────────────────────────────────────────────────
 
 export async function fetchPermissionsTree(): Promise<PermissionNode[]> {
-  const { data } = await axiosInstance.get('/accounts/permissions/tree/', { skipAuth: true });
+  const { data } = await axiosInstance.get('/accounts/permissions/tree/');
   return data;
 }
 
 // ─── User Management ─────────────────────────────────────────────────────────
 
 export async function fetchUsers(params?: any): Promise<any> {
-  const { data } = await axiosInstance.get('/accounts/users/', { params, skipAuth: true });
+  const { data } = await axiosInstance.get('/accounts/users/', { params });
   return data;
 }
 
 export async function assignRoleToUser(userId: number, roleId: number | null): Promise<void> {
-  await axiosInstance.post(`/accounts/users/${userId}/assign-role/`, { role_id: roleId }, { skipAuth: true });
+  await axiosInstance.post(`/accounts/users/${userId}/assign-role/`, { role_id: roleId });
 }
 
 export async function updateUser(userId: number, payload: UpdateUserPayload): Promise<ManagedUser> {
-  const { data } = await axiosInstance.put(`/accounts/users/${userId}/`, payload, { skipAuth: true });
+  const { data } = await axiosInstance.put(`/accounts/users/${userId}/`, payload);
   return data;
+}
+
+export async function deleteUser(id: string | number): Promise<void> {
+  await axiosInstance.delete(`/accounts/users/${id}/`);
 }
 
 export async function bulkDeleteUsers(ids: number[]): Promise<void> {
   await axiosInstance.delete('/accounts/users/', { 
-    data: { ids },
-    skipAuth: true 
+    data: { ids }
   });
 }
 
@@ -69,7 +72,7 @@ export async function bulkUpdateUsers(ids: number[], payload: Partial<UpdateUser
   await axiosInstance.patch('/accounts/users/', { 
     ids, 
     ...payload 
-  }, { skipAuth: true });
+  });
 }
 
 // ─── User Access (Per-User Permission Overrides) ──────────────────────────────
@@ -81,15 +84,14 @@ export interface UserAccessData {
 }
 
 export async function fetchUserAccess(userId: number): Promise<UserAccessData> {
-  const { data } = await axiosInstance.get(`/accounts/users/${userId}/permissions/`, { skipAuth: true });
+  const { data } = await axiosInstance.get(`/accounts/users/${userId}/permissions/`);
   return data;
 }
 
 export async function updateUserAccess(userId: number, userTabs: string[]): Promise<UserAccessData> {
   const { data } = await axiosInstance.put(
     `/accounts/users/${userId}/permissions/`,
-    { user_tabs: userTabs },
-    { skipAuth: true }
+    { user_tabs: userTabs }
   );
   return data;
 }
@@ -97,8 +99,7 @@ export async function updateUserAccess(userId: number, userTabs: string[]): Prom
 export async function resetUserAccess(userId: number): Promise<UserAccessData> {
   const { data } = await axiosInstance.put(
     `/accounts/users/${userId}/permissions/`,
-    { action: 'reset' },
-    { skipAuth: true }
+    { action: 'reset' }
   );
   return data;
 }

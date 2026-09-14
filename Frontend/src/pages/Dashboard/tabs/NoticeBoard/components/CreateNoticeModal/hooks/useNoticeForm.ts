@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { fetchBlocks } from '@/services/auth/auth.service';
 import { fetchRoles } from '../../../../Administration/services/roles.service';
@@ -19,6 +19,7 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'Critical'>('Low');
 
   // Scheduling State
+  const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled'>('immediate');
   const [publishDate, setPublishDate] = useState('');
   const [validUntil, setValidUntil] = useState('');
 
@@ -40,6 +41,9 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
   // Media
   const [files, setFiles] = useState<UploadedFile[]>([]);
 
+  // Audience Type State
+  const [audienceType, setAudienceType] = useState<'everyone' | 'roles' | 'blocks'>('everyone');
+
   useEffect(() => {
     fetchRoles().then((data: any) => {
       const rolesArray = data.results || data.roles || [];
@@ -48,7 +52,7 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
     fetchBlocks().then(setAvailableBlocks).catch(console.error);
   }, []);
 
-  useEffect(() => {
+  const resetForm = useCallback(() => {
     if (editNotice) {
       setTitle(editNotice.title);
       setContent(editNotice.content);
@@ -56,9 +60,17 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
       setPriority(editNotice.priority);
       setRequiresAck(editNotice.requires_acknowledgement);
 
-      setPublishDate(editNotice.publish_date ? new Date(editNotice.publish_date).toISOString().slice(0, 16) : '');
-      setValidUntil(editNotice.valid_until ? new Date(editNotice.valid_until).toISOString().slice(0, 16) : '');
-      setAcknowledgeBy(editNotice.acknowledge_by ? new Date(editNotice.acknowledge_by).toISOString().slice(0, 16) : '');
+      if (editNotice.publish_date || editNotice.valid_until) {
+        setPublishMode('scheduled');
+        setPublishDate(editNotice.publish_date ? new Date(editNotice.publish_date).toISOString() : '');
+        setValidUntil(editNotice.valid_until ? new Date(editNotice.valid_until).toISOString() : '');
+      } else {
+        setPublishMode('immediate');
+        setPublishDate('');
+        setValidUntil('');
+      }
+
+      setAcknowledgeBy(editNotice.acknowledge_by ? new Date(editNotice.acknowledge_by).toISOString() : '');
 
       const audience = editNotice.target_audience || [];
       const editRoles: string[] = [];
@@ -76,24 +88,44 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
       setTargetRoles(editRoles);
       setTargetBlocks(editBlocks);
       setTargetFlats(editFlats);
+
+      if (editRoles.length > 0) {
+        setAudienceType('roles');
+      } else if (editBlocks.length > 0 || editFlats.length > 0) {
+        setAudienceType('blocks');
+      } else {
+        setAudienceType('everyone');
+      }
+
     } else {
       setTitle('');
       setContent('');
       setCategory('General');
       setPriority('Low');
+      setPublishMode('immediate');
       setPublishDate('');
       setValidUntil('');
       setRequiresAck(false);
       setAcknowledgeBy('');
+      setAudienceType('everyone');
       setTargetRoles([]);
       setTargetBlocks([]);
       setTargetFlats([]);
       setFiles([]);
     }
-  }, [editNotice]); // removed isOpen from dependencies since hook shouldn't care about it
+  }, [editNotice]);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  useEffect(() => {
+    resetForm();
+  }, [resetForm]);
+
+  const handleSubmit = async (eOrStatus?: React.FormEvent | 'Draft' | 'Scheduled' | 'Published') => {
+    let statusOverride: 'Draft' | 'Scheduled' | 'Published' | undefined;
+    if (typeof eOrStatus === 'string') {
+      statusOverride = eOrStatus;
+    } else if (eOrStatus && 'preventDefault' in eOrStatus) {
+      eOrStatus.preventDefault();
+    }
     if (!title.trim()) {
       showToast('Title is required', 'error');
       return;
@@ -106,11 +138,19 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
     setLoading(true);
 
     try {
-      const targetAudience = [
-        ...targetRoles.map(r => ({ role: r })),
-        ...targetBlocks.map(b => ({ block: b })),
-        ...targetFlats.map(f => ({ flat: f }))
-      ];
+      let targetAudience: any[] = [];
+      if (audienceType === 'roles') {
+        targetAudience = targetRoles.map(r => ({ role: r }));
+      } else if (audienceType === 'blocks') {
+        targetAudience = [
+          ...targetBlocks.map(b => ({ block: b })),
+          ...targetFlats.map(f => ({ flat: f }))
+        ];
+      }
+
+      const finalPublishDate = publishMode === 'scheduled' && publishDate ? new Date(publishDate).toISOString() : undefined;
+      const finalValidUntil = publishMode === 'scheduled' && validUntil ? new Date(validUntil).toISOString() : undefined;
+      const finalAckBy = requiresAck && acknowledgeBy ? new Date(acknowledgeBy).toISOString() : undefined;
 
       if (editNotice) {
         await noticeService.updateNotice(editNotice.id, {
@@ -120,6 +160,9 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
           priority,
           requires_acknowledgement: requiresAck,
           target_audience: targetAudience,
+          publish_date: finalPublishDate,
+          valid_until: finalValidUntil,
+          acknowledge_by: finalAckBy,
         });
         showToast('Notice updated successfully', 'success');
         onNoticeUpdated();
@@ -131,9 +174,18 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
         formData.append('priority', priority);
         formData.append('requires_acknowledgement', String(requiresAck));
 
-        if (publishDate) formData.append('publish_date', new Date(publishDate).toISOString());
-        if (validUntil) formData.append('valid_until', new Date(validUntil).toISOString());
-        if (requiresAck && acknowledgeBy) formData.append('acknowledge_by', new Date(acknowledgeBy).toISOString());
+        // Determine status
+        const determinedStatus = statusOverride
+          ? statusOverride
+          : publishMode === 'scheduled'
+            ? 'Scheduled'
+            : 'Published';
+
+        formData.append('status', determinedStatus);
+
+        if (finalPublishDate) formData.append('publish_date', finalPublishDate);
+        if (finalValidUntil) formData.append('valid_until', finalValidUntil);
+        if (finalAckBy) formData.append('acknowledge_by', finalAckBy);
 
         formData.append('target_audience', JSON.stringify(targetAudience));
 
@@ -142,7 +194,14 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
         });
 
         await noticeService.createNotice(formData);
-        showToast('Notice created successfully as Draft', 'success');
+        
+        if (determinedStatus === 'Draft') {
+          showToast('Notice saved as draft', 'info');
+        } else if (determinedStatus === 'Scheduled') {
+          showToast('Notice scheduled successfully', 'success');
+        } else {
+          showToast('Notice published successfully', 'success');
+        }
         onNoticeCreated();
       }
       onClose();
@@ -153,49 +212,39 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
     }
   };
 
-  const handleRoleToggle = (role: string) => {
-    setTargetRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
-  };
-
-  const handleBlockToggle = (block: string) => {
-    setTargetBlocks(prev => prev.includes(block) ? prev.filter(b => b !== block) : [...prev, block]);
-  };
-
-  const handleRemoveFlat = (flat: string) => {
-    setTargetFlats(prev => prev.filter(f => f !== flat));
-  };
-
-  const handleAddFlat = () => {
-    if (!selectedBlockForFlats || !selectedFlatInput) return;
-    const flatString = `${selectedBlockForFlats} - ${selectedFlatInput}`;
-    if (!targetFlats.includes(flatString)) {
-      setTargetFlats(prev => [...prev, flatString]);
+  const saveDraftOnClose = async () => {
+    if (!title.trim() && !content.trim()) {
+      onClose();
+      return;
     }
-    setSelectedFlatInput('');
+    await handleSubmit('Draft');
   };
+
+  const isDirty = title.trim().length > 0 || content.trim().length > 0;
 
   return {
-    loading,
     title, setTitle,
     content, setContent,
     category, setCategory,
     priority, setPriority,
+    publishMode, setPublishMode,
     publishDate, setPublishDate,
     validUntil, setValidUntil,
     requiresAck, setRequiresAck,
     acknowledgeBy, setAcknowledgeBy,
+    audienceType, setAudienceType,
     availableRoles,
     availableBlocks,
-    targetRoles,
-    targetBlocks,
-    targetFlats,
+    targetRoles, setTargetRoles,
+    targetBlocks, setTargetBlocks,
+    targetFlats, setTargetFlats,
     selectedBlockForFlats, setSelectedBlockForFlats,
     selectedFlatInput, setSelectedFlatInput,
     files, setFiles,
+    loading,
+    isDirty,
     handleSubmit,
-    handleRoleToggle,
-    handleBlockToggle,
-    handleRemoveFlat,
-    handleAddFlat,
+    saveDraftOnClose,
+    resetForm,
   };
 };

@@ -22,14 +22,12 @@ export const NAVIGATION: TabConfig[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: Home,
-    permissionId: "dashboard.view",
   },
   {
     id: "resident",
     label: "Resident Services",
     icon: User,
     subTabs: [
-      { id: "profile", label: "My Profile", permissionId: "resident_services.my_profile.view" },
       { id: "vehicles", label: "Vehicles", permissionId: "resident_services.vehicles.view" },
       { id: "receipts", label: "Receipts", permissionId: "resident_services.receipts.view" },
     ]
@@ -49,6 +47,7 @@ export const NAVIGATION: TabConfig[] = [
     icon: Calendar,
     subTabs: [
       { id: "notices", label: "Notices", permissionId: "community.notices.view" },
+      { id: "notice-approvals", label: "Notice Approvals", permissionId: "community.notices.approve" },
       { id: "amenities", label: "Amenities", permissionId: "community.amenities.view" },
     ]
   },
@@ -59,7 +58,6 @@ export const NAVIGATION: TabConfig[] = [
     subTabs: [
       { id: "users", label: "Users", permissionId: "administration.users.view" },
       { id: "roles", label: "Roles", permissionId: "administration.roles.view" },
-      { id: "settings", label: "Settings", permissionId: "administration.settings.view" },
     ]
   },
   {
@@ -67,5 +65,10 @@ export const NAVIGATION: TabConfig[] = [
     label: "Emergency",
     icon: AlertTriangle,
     permissionId: "emergency.view",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
   }
 ];

@@ -38,8 +38,8 @@ class DashboardSummaryView(APIView):
 
         # Metrics
         unread_notices = sum(1 for n in active_notices if n.requires_acknowledgement and not n.acknowledgements.filter(user=user, status='Acknowledged').exists())
-        open_issues = Issue.objects.filter(reported_by=user, status__in=['Open', 'Assigned', 'In Progress']).count()
-        total_issues = Issue.objects.filter(reported_by=user).count()
+        open_issues = Issue.objects.filter(created_by=user, status__in=['Open', 'Assigned', 'In Progress']).count()
+        total_issues = Issue.objects.filter(created_by=user).count()
         
         metrics = {
             "fee_due": "4,500", # Mocked for now since Billing isn't implemented

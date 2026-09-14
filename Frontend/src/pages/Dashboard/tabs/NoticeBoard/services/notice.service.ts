@@ -66,10 +66,15 @@ class NoticeService {
     return response.data;
   }
 
-  /** Cancel a notice */
+  /** Cancel a notice (business soft cancel) */
   async cancelNotice(id: string): Promise<Notice> {
     const response = await axiosInstance.post<Notice>(`/notices/${id}/cancel/`);
     return response.data;
+  }
+
+  /** Delete a notice permanently (hard delete for drafts/cancelled) */
+  async deleteNotice(id: string): Promise<void> {
+    await axiosInstance.delete(`/notices/${id}/`);
   }
 
   /** Approve a draft notice */

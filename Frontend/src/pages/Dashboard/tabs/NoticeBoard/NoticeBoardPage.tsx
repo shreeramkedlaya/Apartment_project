@@ -3,22 +3,26 @@ import type { Column } from '@/components/common/DataTable/types/types';
 import { useAuth } from '@/context/AuthContext';
 import { noticeService } from './services/notice.service';
 import type { Notice } from './services/notice.service';
-import { Bell, FileText, CheckCircle2, Clock, Plus } from 'lucide-react';
+import { Bell, FileText, CheckCircle2, Clock, Plus, Trash2, XCircle } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import type { DataTableRef } from '@/components/common/DataTable/types/types';
 import CreateNoticeModal from './components/CreateNoticeModal/CreateNoticeModal';
 import NoticeDetailsPanel from './components/NoticeDetailsPanel';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useToast } from '@/context/ToastContext';
 
 const NoticeBoardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
+  const { showToast } = useToast();
   const tableRef = useRef<DataTableRef>(null);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noticeToEdit, setNoticeToEdit] = useState<Notice | null>(null);
+  const [noticeToAction, setNoticeToAction] = useState<Notice | null>(null);
+  const [actionType, setActionType] = useState<'delete' | 'cancel' | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  // Only users with the explicit "Manage Notices" (community.notices.add) permission can create/manage notices.
-  // Admins inherently get this capability based on their role setup, but we check the specific permission tab.
-  const canManageNotices = user?.permissionTabs?.includes('community.notices.add') || user?.role === 'admin';
+  const canManageNotices = hasPermission('community.notices.add');
 
   const columns: Column[] = [
     {
@@ -83,6 +87,37 @@ const NoticeBoardPage: React.FC = () => {
     setNoticeToEdit(row);
   };
 
+  const handleActionClick = (row: Notice) => {
+    if (row.status === 'Draft' || row.status === 'Cancelled') {
+      setActionType('delete');
+    } else {
+      setActionType('cancel');
+    }
+    setNoticeToAction(row);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!noticeToAction || !actionType) return;
+    setActionLoading(true);
+    try {
+      if (actionType === 'delete') {
+        await noticeService.deleteNotice(noticeToAction.id);
+        showToast('Notice permanently deleted', 'success');
+      } else {
+        await noticeService.cancelNotice(noticeToAction.id);
+        showToast('Notice cancelled successfully', 'success');
+      }
+      tableRef.current?.refresh();
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || error.response?.data?.error || `Failed to ${actionType} notice`;
+      showToast(msg, 'error');
+    } finally {
+      setActionLoading(false);
+      setNoticeToAction(null);
+      setActionType(null);
+    }
+  };
+
   useEffect(() => {
     const handleNoticeUpdate = () => {
       tableRef.current?.refresh();
@@ -102,7 +137,6 @@ const NoticeBoardPage: React.FC = () => {
             const res = await noticeService.getNotices();
             return { results: res, count: res.length };
           }}
-          deleteApi={canManageNotices ? (id) => noticeService.cancelNotice(String(id)) : undefined}
           columns={columns}
           defaultVisibleColumns={['Title', 'Category', 'Status', 'Requires Ack', 'Publish Date']}
           computeStats={computeStats}
@@ -112,6 +146,23 @@ const NoticeBoardPage: React.FC = () => {
           allowToggle
           onRowClick={handleRowClick}
           onEdit={canManageNotices ? handleEdit : undefined}
+          extraRowActions={canManageNotices ? (row: Notice) => {
+            const isDelete = row.status === 'Draft' || row.status === 'Cancelled';
+            return (
+              <button
+                type="button"
+                onClick={() => handleActionClick(row)}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                  isDelete
+                    ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                    : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                }`}
+              >
+                {isDelete ? <Trash2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                {isDelete ? 'Delete' : 'Cancel Notice'}
+              </button>
+            );
+          } : undefined}
           filters={[
             { key: 'category', label: 'Category', options: ['General', 'Water', 'Power', 'Maintenance', 'Security', 'Event'] },
             { key: 'priority', label: 'Priority', options: ['Low', 'Medium', 'Critical'] },
@@ -151,6 +202,26 @@ const NoticeBoardPage: React.FC = () => {
         editNotice={noticeToEdit}
         onNoticeCreated={() => tableRef.current?.refresh()}
         onNoticeUpdated={() => tableRef.current?.refresh()}
+      />
+
+      {/* Context-aware Delete / Cancel Notice Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!noticeToAction}
+        onClose={() => {
+          setNoticeToAction(null);
+          setActionType(null);
+        }}
+        onConfirm={handleConfirmAction}
+        title={actionType === 'delete' ? 'Delete Notice' : 'Cancel Notice'}
+        message={
+          actionType === 'delete'
+            ? `Are you sure you want to permanently delete "${noticeToAction?.title}"? This action cannot be undone.`
+            : `Are you sure you want to cancel "${noticeToAction?.title}"? Residents will no longer see active alerts for it.`
+        }
+        confirmText={actionType === 'delete' ? 'Delete Permanently' : 'Confirm Cancellation'}
+        cancelText="Close"
+        isDestructive={true}
+        isLoading={actionLoading}
       />
     </div>
   );

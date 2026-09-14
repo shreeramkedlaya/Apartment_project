@@ -10,6 +10,4 @@ from django.apps import AppConfig
 # To use it, move code into a proper app package (e.g. apps/users/)
 # and set name = "apps.users".
 class BackendConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    # Update 'name' to the actual dotted import path of the app before registering.
     name = ""  # e.g. "apps.users"

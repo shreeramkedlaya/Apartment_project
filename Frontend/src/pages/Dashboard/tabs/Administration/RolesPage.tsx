@@ -19,14 +19,14 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 export default function RolesPage() {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
   const tableRef = useRef<DataTableRef>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
 
-  const canAdd = user?.permissionTabs?.includes('administration.roles.add') || user?.role === 'admin';
-  const canEdit = user?.permissionTabs?.includes('administration.roles.edit') || user?.role === 'admin';
-  const canDelete = user?.permissionTabs?.includes('administration.roles.delete') || user?.role === 'admin';
+  const canAdd = hasPermission('administration.roles.add');
+  const canEdit = hasPermission('administration.roles.edit');
+  const canDelete = hasPermission('administration.roles.delete');
   const handleEdit = async (r: Role) => {
     try {
       const fullRole = await fetchRole(r.id);
@@ -48,6 +48,20 @@ export default function RolesPage() {
           {r.description && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-1">{r.description}</p>}
         </div>
       ),
+      sortKey: 'name',
+      sortable: true,
+    },
+    {
+      header: 'Code',
+      type: 'text',
+      accessor: 'code',
+      sortKey: 'code',
+      sortable: true,
+    },
+    {
+      header: 'Description',
+      type: 'text',
+      accessor: (r: Role) => r.description || '—',
     },
     {
       header: 'Users',
@@ -70,6 +84,13 @@ export default function RolesPage() {
         draft: { label: '', className: STATUS_CONFIG.draft.className },
       },
       sortKey: 'status',
+      sortable: true,
+    },
+    {
+      header: 'Created',
+      type: 'date',
+      accessor: 'created_at',
+      sortKey: 'created_at',
       sortable: true,
     },
   ];
@@ -95,7 +116,7 @@ export default function RolesPage() {
         api={fetchRoles}
         deleteApi={canDelete ? (id) => deleteRole(Number(id)) : undefined}
         columns={columns}
-        defaultVisibleColumns={['Role', 'Users', 'Status']}
+        defaultVisibleColumns={['Role', 'Code', 'Users', 'Status']}
         computeStats={computeStats}
         enableSelection
         enableSearch
