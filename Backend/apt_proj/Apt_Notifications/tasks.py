@@ -15,7 +15,72 @@ INVALID_TOKEN_KEYWORDS = [
     "INVALID_REGISTRATION",
 ]
 
+@shared_task
+def check_slas_and_escalate():
+    """
+    Checks for issues in 'Open' or 'Acknowledged' state that are older than 24 hours.
+    Escalates them to High priority and triggers a notification to managers.
+    """
+    from django.contrib.auth import get_user_model
+    from datetime import timedelta
+    from django.utils import timezone
+    from apt_proj.Apt_Issues.Issue_models import Issue, IssueTimeline
+    
+    User = get_user_model
+    sla_threshold = timezone.now() - timedelta(hours=24)
 
+    issues = Issue.objects.filter(
+        created_at__lt=sla_threshold,
+        status__in=[Issue.Status.OPEN, Issue.Status.ACKNOWLEDGED],
+    )
+
+    escalated_count = 0
+    for issue in issues:
+        metadata = issue.issue_metadata or {}
+        if metadata.get('is_escalated'):
+            continue
+        
+        # escalate issue
+        metadata['is_escalated'] = True
+        issue.issue_metadata = metadata
+        issue.priority = 'High'
+        issue.save(update_fields=['issue_metadata', 'priority','updated_at'])
+
+        # log timeline
+        timeline,_ = IssueTimeline.objects.get_or_create(issue=issue)
+        event = {
+            "id": str(uuid.uuid4()),
+            "status_from": None,
+            "status_to": None,
+            "comment": "SLA breached (24h). Issue automatically escalated to High priority.",
+            "created_at": timezone.now().isoformat(),
+            "updated_by": {"id": "system", "name": "System"}
+        }
+        timeline.history.append(event)
+        timeline.save(update_fields=['history'])
+
+        # notify admins/managers
+        try:
+            manager_ids = list(User.objects.filter(
+                profile__role__name__in=['admin','manager']
+            ).values_list('id',flat=True))
+
+            if manager_ids:
+                send_notification_task.delay(
+                    title=f"🚨 SLA Breach: {issue.title}",
+                    body=f"Issue #{issue.issue_code or issue.id} has breached the 24h SLA.",
+                    data={"event_type": "issue_updated", "issue_id": issue.id},
+                    user_ids=manager_ids
+                )
+        except Exception as e:
+            logger.error(f"Failed to send escalation notification for issue {issue.id}: {e}")
+        escalated_count += 1
+    if escalated_count > 0:
+        logger.info(f"Escalated {escalated_count} issues due to SLA breach.")
+    return {"escalated_count": escalated_count}
+
+        
+    
 def _build_fcm_message(token: str, title: str, body: str, data: Dict[str, Any]):
     return messaging.Message(
         token=token,

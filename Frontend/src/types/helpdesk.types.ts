@@ -48,6 +48,7 @@ export interface HelpdeskRequest {
     name: string;
   };
   resolution_notes?: string;
+  is_escalated?: boolean;
   timeline?: RequestTimelineEntry[];
 }
 

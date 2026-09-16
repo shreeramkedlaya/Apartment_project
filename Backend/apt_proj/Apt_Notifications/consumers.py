@@ -1,5 +1,7 @@
 import json
 import logging
+import asyncio
+from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import AccessToken
@@ -14,9 +16,31 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         """
         self.user = None
         self.user_group_name = None
+        self.auth_timeout_task = None
         await self.accept()
+
+        # connect immeidately via query_string
+        query_string = self.scope.get('query_string', b'').decode('utf8')
+        token = parse_qs(query_string).get('token',[None])[0]
+
+        if token:
+            await self.authenticate_and_join(token)
+
+        # start background task for 5-sec auth timeout
+        self.auth_timeout_task = asyncio.create_task(self.check_auth_timeout())
+
+    async def check_auth_timeout(self):
+        await asyncio.sleep(5)
+
+        if not self.user_group_name:
+            logger.warning("WebSocket connection timed out")
+            await self.close(code=4008)
         
     async def disconnect(self, close_code):
+        if getattr(self, "auth_timeout_task", None):
+            self.auth_timeout_task.cancel()
+
+
         if self.user_group_name:
             await self.channel_layer.group_discard(
                 self.user_group_name,

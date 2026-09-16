@@ -1,0 +1,29 @@
+# ==========================================
+# Database Initialization & Migration Commands
+# ==========================================
+
+# 1. DROP the old database to clean out the messy migrations
+dropdb -U postgres apartment_db
+
+# 2. Re-initialize the PostgreSQL database (creates apartment_db and schemas)
+psql -U postgres -f workspace_simple/Backend/db-init.sql
+
+# 3. Navigate into the Backend folder
+cd workspace_simple/Backend
+
+# 4. Generate fresh migration files for our custom Schema architecture
+python manage.py makemigrations apt_proj
+
+# 5. Apply migrations. Django Auth/Session tables will go to the 'public' schema, 
+# and Apt Proj tables will automatically go to the 'apt_data' schema!
+python manage.py migrate
+
+# 6. Create the master Superadmin account
+python manage.py createsuperuser
+
+
+
+find . -type d -name "__pycache__" -exec rm -rf {} +
+
+To find every __init__.py and print its contents, use:
+find . -type f -name "__init__.py" -exec sh -c 'echo "===== $1 ====="; cat "$1"; echo' _ {} \;

@@ -5,7 +5,7 @@ import { fetchBlocks } from '@/services/auth/auth.service';
 import { HelpdeskService } from './services/helpdesk.service';
 import type { BlockData } from '@/types/auth.types';
 import type { HelpdeskRequest } from '@/types/helpdesk.types';
-import { AlertCircle, CheckCircle2, Clock, Plus, Ticket, RefreshCcw } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Plus, Ticket, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import type { DataTableRef } from '@/components/common/DataTable/types/types';
 import CreateRequestModal from './CreateRequestModal';
@@ -56,9 +56,15 @@ const RequestsPage: React.FC = () => {
     },
     {
       header: 'Title',
-      type: 'text',
-      accessor: 'title',
+      type: 'custom',
+      accessor: (row: any) => (
+        <span className="flex items-center gap-1.5">
+          {row.title}
+          {row.is_escalated && <AlertTriangle className="w-3.5 h-3.5 text-red-500 fill-red-500/10" />}
+        </span>
+      ),
       sortable: true,
+      sortKey: 'title',
     },
     {
       header: 'Category',
@@ -118,6 +124,39 @@ const RequestsPage: React.FC = () => {
     }
   };
 
+  const renderCard = (row: any) => {
+    return (
+      <div
+        key={row.id}
+        onClick={() => handleRowClick(row)}
+        className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 hover:shadow-md cursor-pointer transition-shadow space-y-3"
+      >
+        <div className="flex justify-between items-start gap-2">
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 text-sm flex items-center gap-1.5">
+              {row.title}
+              {row.is_escalated && <AlertTriangle className="w-3.5 h-3.5 text-red-500 fill-red-500/10 shrink-0" />}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{row.category_name || row.category}</p>
+          </div>
+          <span className={`px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap ${row.status === 'Open' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+            row.status === 'Resolved' || row.status === 'Closed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+              'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            }`}>
+            {row.status}
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 pt-1">
+          <div className="flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" />
+            {new Date(row.created_at).toLocaleDateString()}
+          </div>
+          <span className="font-mono">#{row.id}</span>
+        </div>
+      </div>
+    )
+  }
+
 
 
   return (
@@ -133,7 +172,8 @@ const RequestsPage: React.FC = () => {
           computeStats={computeStats}
           enableSearch
           searchPlaceholder="Search requests..."
-          defaultView="table"
+          defaultView={canManageTickets ? 'table' : 'grid'}
+          renderCard={renderCard}
           allowToggle
           onRowClick={handleRowClick}
           onEdit={canEdit ? handleEdit : undefined}
@@ -150,7 +190,7 @@ const RequestsPage: React.FC = () => {
           filters={[
             { key: 'category', label: 'Category', options: ['Water', 'Power', 'Housekeeping', 'Gym', 'Pool'] },
             { key: 'priority', label: 'Priority', options: ['Low', 'Medium', 'High'] },
-            { key: 'status', label: 'Status', options: ['Open', 'Assigned', 'In Progress', 'Resolved', 'Closed'] }
+            { key: 'status', label: 'Status', options: ['Open', 'Acknowledged', 'Assigned', 'In Progress', 'Resolved', 'Closed'] }
           ]}
           extraToolbarActions={
             canAdd && (

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from apt_proj.pagination import StatsPagination
@@ -11,15 +11,10 @@ from ..serializers.issue_serializers import IssueSerializer, IssueListSerializer
 from ..services.issue_service import pack_metadata, is_valid_transition, handle_attachments, update_issue_timeline
 
 class IssueAPIView(APIView):
-    # Using AllowAny for now to prevent breaking existing tests, 
-    # but filtering will check if user is authenticated
-    permission_classes = [AllowAny] 
+    permission_classes = [IsAuthenticated] 
 
     def get_queryset(self, request):
         user = request.user
-        if not user.is_authenticated:
-            return Issue.objects.none() 
-            
         role = getattr(user, 'role', 'resident')
         if role in ['admin', 'manager'] or user.is_staff:
             return Issue.objects.all().order_by('-created_at')
@@ -57,13 +52,16 @@ class IssueAPIView(APIView):
             paginator = StatsPagination()
             
             # Use original queryset for accurate stats ignoring search filters
+            from django.db.models import Count
             base_qs = self.get_queryset(request)
+            status_counts = dict(base_qs.values_list('status').annotate(count=Count('id')))
             paginator.stats = {
                 "total": base_qs.count(),
-                "pending": base_qs.filter(status='pending').count(),
-                "in_progress": base_qs.filter(status='in_progress').count(),
-                "resolved": base_qs.filter(status='resolved').count(),
-                "closed": base_qs.filter(status='closed').count(),
+                "open": status_counts.get('open',0),
+                "assigned": status_counts.get('assigned',0),
+                "in_progress": status_counts.get('in_progress',0),
+                "resolved": status_counts.get('resolved',0),
+                "closed": status_counts.get('closed',0),
             }
 
             page = paginator.paginate_queryset(issues, request)

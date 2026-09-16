@@ -51,6 +51,7 @@ class Issue(TimeStampedModel):
         max_length=20,
         choices=[
             ('Open', 'Open'),
+            ('Acknowledged', 'Acknowledged'),
             ('Assigned', 'Assigned'),
             ('In Progress', 'In Progress'),
             ('Resolved', 'Resolved'),

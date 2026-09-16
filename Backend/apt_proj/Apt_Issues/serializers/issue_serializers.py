@@ -80,4 +80,5 @@ class IssueListSerializer(IssueSerializer):
             
         metadata = instance.issue_metadata or {}
         ret['resolution_notes'] = metadata.get('resolution_notes', None)
+        ret['is_escalated'] = metadata.get('is_escalated', False)
         return ret

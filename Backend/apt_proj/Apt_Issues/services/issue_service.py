@@ -19,7 +19,8 @@ def is_valid_transition(old_status, new_status):
     if not new_status or old_status == new_status:
         return True
     valid_map = {
-        'Open': ['Assigned', 'Closed'],
+        'Open': ['Acknowledged', 'Closed'],
+        'Acknowledged': ['Assigned', 'Closed'],
         'Assigned': ['In Progress', 'Resolved'],
         'In Progress': ['Resolved'],
         'Resolved': ['Closed'],
@@ -27,14 +28,16 @@ def is_valid_transition(old_status, new_status):
     }
     return new_status in valid_map.get(old_status, [])
 
-def handle_attachments_bg(files_data, issue_id, timeline_id, event_id):
-    # Background task logic to save attachments and update timeline event
-    issue = Issue.objects.get(id=issue_id)
-    attachment_ids = []
-    for file_obj in files_data:
+def handle_attachments(request, issue, timeline_id=None, event_id=None):
+    attachments = request.FILES.getlist('attachments')
+    if not attachments:
+        return
+    # run_in_background(handle_attachments_bg, attachments, issue.id, timeline_id, event_id)
+    attachment_ids=[]
+    for file_obj in attachments:
         att = IssueAttachment.objects.create(issue=issue, file=file_obj)
         attachment_ids.append(att.id)
-        
+    
     if timeline_id and event_id and attachment_ids:
         timeline = IssueTimeline.objects.get(id=timeline_id)
         for event in timeline.history:
@@ -42,12 +45,7 @@ def handle_attachments_bg(files_data, issue_id, timeline_id, event_id):
                 event['attachment_ids'] = attachment_ids
                 break
         timeline.save(update_fields=['history', 'updated_at'])
-
-def handle_attachments(request, issue, timeline_id=None, event_id=None):
-    attachments = request.FILES.getlist('attachments')
-    if not attachments:
-        return
-    run_in_background(handle_attachments_bg, attachments, issue.id, timeline_id, event_id)
+    
 
 def notify_status_change(issue, old_status, new_status):
     user_ids = []
@@ -61,7 +59,8 @@ def notify_status_change(issue, old_status, new_status):
     if not user_ids:
         return
         
-    send_notification_task.delay(
+    try:
+        send_notification_task.delay(
         title="Issue Status Updated",
         body=f"Issue #{issue.id} ('{issue.title}') has been updated to {new_status}.",
         data={
@@ -73,6 +72,11 @@ def notify_status_change(issue, old_status, new_status):
         user_ids=user_ids,
         all_users=False
     )
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to send notification for issue {issue.id}: {e}")
+
 
 def update_issue_timeline(issue, user, old_status, new_status, resolution_notes):
     timeline, created = IssueTimeline.objects.get_or_create(issue=issue)

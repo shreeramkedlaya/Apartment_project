@@ -60,7 +60,7 @@ class UserAPIView(APIView):
             User.objects.select_related('profile', 'profile__role', 'profile__flat', 'profile__flat__block'),
             pk=pk
         )
-
+       
     def get(self, request, pk=None):
         if pk is not None:
             user = self.get_object(pk)
@@ -68,6 +68,12 @@ class UserAPIView(APIView):
             return Response(serializer.data)
 
         users = User.objects.select_related('profile', 'profile__role', 'profile__flat', 'profile__flat__block').all()
+        # add staff filter
+        staff_only = request.GET.get('staff_only','').lower() == 'true'
+        if staff_only:
+            # assumes staff are users with roles or superusers
+            users = users.filter(Q(profile__role__isnull=False) | Q(is_superuser=True)).distinct()
+
 
         search = request.GET.get('search', '').strip()
         if search:

@@ -2,6 +2,13 @@ import axiosInstance from '@/services/core/axiosinstance';
 import type { HelpdeskRequest, IssueCategoryObj } from '@/types/helpdesk.types';
 
 export const HelpdeskService = {
+  getStaffUsers: async (): Promise<any[]> => {
+    const { data } = await axiosInstance.get('/accounts/users/', { params: { staff_only: true } });
+    if (data && Array.isArray(data.results)) return data.results;
+    if (Array.isArray(data)) return data;
+    return [];
+  },
+
   getRequests: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.get('/issues/', { params });
     // Keep array fallback in case we use it without pagination
@@ -38,17 +45,17 @@ export const HelpdeskService = {
     if (data && Array.isArray(data.results)) return data.results;
     return data;
   },
-  
+
   createCategory: async (categoryData: Partial<IssueCategoryObj>): Promise<IssueCategoryObj> => {
     const { data } = await axiosInstance.post('/issues/categories/', categoryData);
     return data;
   },
-  
+
   updateCategory: async (id: number | string, categoryData: Partial<IssueCategoryObj>): Promise<IssueCategoryObj> => {
     const { data } = await axiosInstance.put(`/issues/categories/${id}/`, categoryData);
     return data;
   },
-  
+
   deleteCategory: async (id: number | string): Promise<void> => {
     await axiosInstance.delete(`/issues/categories/${id}/`);
   },

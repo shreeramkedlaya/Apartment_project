@@ -17,12 +17,20 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
   onStatusUpdated,
 }) => {
   const [status, setStatus] = useState<string>('Open');
+  const [assignedTo, setAssignedTo] = useState<number | string | ''>('');
+  const [staffList, setStaffList] = useState<any[]>([]);
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (isOpen) HelpdeskService.getStaffUsers().then(setStaffList).catch(console.error);
+  }, [isOpen])
+
+
+  useEffect(() => {
     if (request && isOpen) {
       setStatus(request.status);
+      setAssignedTo(request.assigned_to?.id || '');
       setResolutionNotes('');
     }
   }, [request, isOpen]);
@@ -35,7 +43,10 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
       if (resolutionNotes.trim()) {
         payload.resolution_notes = resolutionNotes.trim();
       }
-      
+      if (status === 'Assigned' && assignedTo) {
+        payload.assigned_to = assignedTo;
+      }
+
       const updated = await HelpdeskService.updateRequest(request.id, payload);
       onStatusUpdated(updated);
       onClose();
@@ -78,7 +89,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Update the status for request <strong className="text-gray-900 dark:text-white">#{request.id} - {request.title}</strong>
         </p>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             New Status
@@ -89,12 +100,33 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
             className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="Open">Open</option>
+            <option value="Acknowledged">Acknowledged</option>
             <option value="Assigned">Assigned</option>
             <option value="In Progress">In Progress</option>
             <option value="Resolved">Resolved</option>
             <option value="Closed">Closed</option>
           </select>
         </div>
+        {status === 'Assigned' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Assign To
+            </label>
+            <select
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            >
+              <option value="">Select Staff Member</option>
+              {staffList.map((staff) => (
+                <option key={staff.id} value={staff.id}>
+                  {staff.first_name || staff.username}
+                  {staff.profile?.role?.name ? ` (${staff.profile.role.name})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -108,7 +140,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
           />
         </div>
       </div>
-    </Modal>
+    </Modal >
   );
 };
 

@@ -25,6 +25,28 @@ const RequestDetailsPanel: React.FC<RequestDetailsPanelProps> = ({
     resolution_notes: '',
   });
 
+  const [commentText, setCommentText] = useState('');
+  const [isCommenting, setIsCommenting] = useState(false);
+
+  const handleAddComment = async () => {
+    if (!commentText.trim() || !request) return;
+
+    try {
+      setIsCommenting(true);
+      // sending patch with same status as comment only update
+      const updated = await HelpdeskService.updateRequest(request.id, {
+        status: request.status as any,
+        resolution_notes: commentText.trim(),
+      })
+      onRequestUpdated(updated);
+      setCommentText('')
+    } catch (error) {
+      console.error('Failed to add comment', error)
+    } finally {
+      setIsCommenting(false)
+    }
+  }
+
   useEffect(() => {
     console.log('request', request)
     if (request) {
@@ -122,6 +144,7 @@ const RequestDetailsPanel: React.FC<RequestDetailsPanelProps> = ({
                 onChange={(e) => setManagementData(prev => ({ ...prev, status: e.target.value }))}
               >
                 <option value="Open">Open</option>
+                <option value="Acknowledged">Acknowledged</option>
                 <option value="Assigned">Assigned</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Resolved">Resolved</option>
@@ -202,6 +225,25 @@ const RequestDetailsPanel: React.FC<RequestDetailsPanelProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+          {/* Comment Input Box */}
+          <div className="mt-4 flex gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+              placeholder="Type a comment or update..."
+              className="flex-1 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              disabled={isCommenting}
+            />
+            <button
+              onClick={handleAddComment}
+              disabled={isCommenting || !commentText.trim()}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all"
+            >
+              {isCommenting ? '...' : 'Send'}
+            </button>
           </div>
         </div>
       )}

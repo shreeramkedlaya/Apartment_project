@@ -65,8 +65,8 @@ const NotificationContext = createContext<NotificationContextType>({
   isConnected: false,
   notifications: [],
   unreadCount: 0,
-  markAsRead: () => {},
-  clearAll: () => {},
+  markAsRead: () => { },
+  clearAll: () => { },
 });
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
@@ -113,28 +113,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const token = await getValidToken();
       if (!token) return;
 
-      // 2. Connect to Daphne WebSocket endpoint
       const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-      ws = new WebSocket(`${wsUrl}/ws/notifications/`);
 
+      // 2. Connect to daphne websocket using query string auth
+      ws = new WebSocket(`${wsUrl}/ws/notifications/?token=${token}`);
       ws.onopen = () => {
         setIsConnected(true);
-        // 3. Send identify payload securely after connection is established
-        ws?.send(
-          JSON.stringify({
-            type: 'identify',
-            token: token,
-          })
-        );
       };
 
       ws.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
-          
+
           if (payload.type === 'notice_published') {
             const title = payload.title || 'New Notice';
-            
+
             // Play offline notification chime
             playNotificationChime();
 
@@ -147,7 +140,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               timestamp: new Date(),
               read: false,
             };
-            
+
             setNotifications(prev => [newNotif, ...prev]);
             setUnreadCount(prev => prev + 1);
 
@@ -160,12 +153,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 icon: '/favicon.svg' // Optional icon
               });
             }
-            
+
             // Dispatch a global event so active tabs can refetch API data
             window.dispatchEvent(new CustomEvent('NOTICES_UPDATED', { detail: payload }));
           } else if (payload.type === 'issue_updated') {
             const title = payload.title || 'Issue Updated';
-            
+
             // Play offline notification chime
             playNotificationChime();
 
@@ -178,7 +171,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               timestamp: new Date(),
               read: false,
             };
-            
+
             setNotifications(prev => [newNotif, ...prev]);
             setUnreadCount(prev => prev + 1);
 
@@ -191,7 +184,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 icon: '/favicon.svg'
               });
             }
-            
+
             // Dispatch a global event so active tabs can refetch API data
             window.dispatchEvent(new CustomEvent('ISSUES_UPDATED', { detail: payload }));
           }

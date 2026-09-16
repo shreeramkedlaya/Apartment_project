@@ -23,6 +23,10 @@ def debug_task(self):
 from celery.schedules import crontab
 
 app.conf.beat_schedule = {
+    'check-slas-hourly': {
+        'task': 'apt_proj.Apt_Notifications.tasks.check_slas_and_escalate',
+        'schedule': crontab(minute=0),
+    },
     'process-scheduled-notices-every-minute': {
         'task': 'apt_proj.Apt_Notifications.tasks.process_scheduled_notices',
         'schedule': crontab(minute='*'),
