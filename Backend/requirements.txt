@@ -18,3 +18,4 @@ holidays==0.10.4
 python-dotenv==1.0.1
 argon2-cffi
 firebase-admin
+supabase==2.9.1

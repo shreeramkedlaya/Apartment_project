@@ -127,7 +127,6 @@ INSTALLED_APPS = [
     "django_celery_results",
     # Local
     "apt_proj",
-    "apt_proj.Apt_Notifications",
 ]
 
 # ─── Middleware ────────────────────────────────────────────────────────────────
@@ -262,3 +261,9 @@ FIREBASE_KEY_PATH = os.getenv("FIREBASE_KEY_PATH", "firebase-adminsdk.json")
 SUPER_ADMIN_PHONES = {
     "+91 8296350150",
 }
+
+# ─── Supabase Storage ────────────────────────────────────────────────────────
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "")
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "APP-DEV")

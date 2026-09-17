@@ -4,6 +4,7 @@
 from .Apt_Accounts.Accounts_models import UserProfile, Block, Flat
 from .Apt_Issues.Issue_models import Issue, IssueTimeline
 from .Apt_Notices.Notices_models import Notice, NoticeAttachment, NoticeApproval, NoticeAcknowledgement
+from .Apt_Storage.models import Media
 
 __all__ = [
     "UserProfile",
@@ -14,5 +15,6 @@ __all__ = [
     "Notice",
     "NoticeAttachment",
     "NoticeApproval",
-    "NoticeAcknowledgement"
+    "NoticeAcknowledgement",
+    "Media"
 ]
