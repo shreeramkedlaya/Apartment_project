@@ -74,7 +74,7 @@ Client -> Django (auth/validate) -> Generate Signed Upload URL + Proof Token -> 
 ---
 
 ## 🎯 Immediate Next Task
-We are currently on **Step 9.1 (Media Migration)**. The frontend uploading component is fully functional! The next step is updating the core `Media` model to utilize Generic Relations and an upload status lifecycle, then running `makemigrations apt_proj` before proceeding to integrate it into the Issue domain.
+We are currently on **Step 9.1 (Media Migration)**. The frontend uploading component is fully functional. An implementation plan has been drafted to update the core `Media` model to utilize Generic Relations and an upload status lifecycle (`PENDING` -> `UPLOADED`). Execution of this plan will commence in the next session.
 
 ---
 

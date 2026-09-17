@@ -29,23 +29,31 @@ def _trigger_publish_events(notice):
 
 def create_notice(data, user, attachments=None):
     """
-    Creates a notice with appropriate status (Published, Scheduled, or Draft)
-    and binds attachments.
+    Creates a notice. Prevents status tampering by verifying 'community.notices.approve' permission.
     """
     from django.db import transaction
+
+    has_approve_perm = False
+    if user and user.is_authenticated:
+        has_approve_perm = user.is_superuser or (
+            hasattr(user, 'profile') and 'community.notices.approve' in user.profile.get_effective_permissions()
+        )
 
     # Determine status based on intent and publish_date
     desired_status = data.get('status', Notice.Status.PUBLISHED)
     publish_date = data.get('publish_date')
 
-    if desired_status == Notice.Status.DRAFT:
+    if not has_approve_perm:
         data['status'] = Notice.Status.DRAFT
-    elif publish_date and publish_date > timezone.now():
-        data['status'] = Notice.Status.SCHEDULED
     else:
-        data['status'] = Notice.Status.PUBLISHED
-        if not publish_date:
-            data['publish_date'] = timezone.now()
+        if desired_status == Notice.Status.DRAFT:
+            data['status'] = Notice.Status.DRAFT
+        elif publish_date and publish_date > timezone.now():
+            data['status'] = Notice.Status.SCHEDULED
+        else:
+            data['status'] = Notice.Status.PUBLISHED
+            if not publish_date:
+                data['publish_date'] = timezone.now()
 
     data['created_by'] = user
     notice = Notice.objects.create(**data)
@@ -113,6 +121,16 @@ def cancel_notice(notice, user):
     notice.status = Notice.Status.CANCELLED
     notice.save()
     return notice
+
+def delete_notice(notice, user):
+    """
+    Deletes a notice. Active notices (Published/Scheduled) cannot be deleted.
+    """
+    if notice.status in [Notice.Status.PUBLISHED, Notice.Status.SCHEDULED]:
+        raise ValidationError("Active notices must be cancelled, not deleted.")
+    
+    notice.delete()
+    return None
 
 def approve_notice(notice, user):
     """

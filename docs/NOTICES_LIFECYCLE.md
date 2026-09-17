@@ -57,7 +57,7 @@ The `target_audience` is a JSON array of targeting criteria stored in the databa
 ```
 - **Inside each object:** Evaluated as **`AND`** (e.g., must be an `Owner` **AND** in `Block A` **AND** in `Flat 101`).
 - **Between objects in the list:** Evaluated as **`OR`** (matches Group 1 **OR** Group 2 **OR** Group 3).
-- Evaluated **dynamically** in `targeting_service.py` against the user's current live profile at read time (`/api/notices/my-notices/`). If a tenant changes flats, their visible notice feed instantly reflects their new flat without database updates.
+- **Targeting is evaluated dynamically at resident read time against the user's current active role/residency/location.** If a tenant changes flats, their visible notice feed instantly reflects their new flat without database updates.
 
 ### Rule 3: Acknowledgement Requirements
 - If `requires_acknowledgement = True`, the system creates `NoticeAcknowledgement` records for targeted users.

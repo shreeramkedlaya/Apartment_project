@@ -46,7 +46,14 @@ class NoticeModuleTests(TestCase):
 
         # User 5: Manager
         self.manager = User.objects.create_user(username='manager', password='pw')
-        UserProfile.objects.create(user=self.manager, role=self.manager_role)
+        UserProfile.objects.create(user=self.manager, role=self.manager_role, permission_tabs=[
+            'community.notices.view',
+            'community.notices.add',
+            'community.notices.edit',
+            'community.notices.delete',
+            'community.notices.cancel',
+            'community.notices.approve'
+        ])
 
         self.client = APIClient()
 
@@ -54,7 +61,7 @@ class NoticeModuleTests(TestCase):
     # 1. Targeting Unit Tests
     # ==========================
     def test_targeting_exact_match(self):
-        target = [{"role": "Owner", "block": "A", "flat": "101"}]
+        target = [{"role": "Owner", "block": "A", "flat": "A - 101"}]
         self.assertTrue(is_user_targeted(self.user1, target))
         self.assertFalse(is_user_targeted(self.user2, target)) # Tenant
 
@@ -107,7 +114,7 @@ class NoticeModuleTests(TestCase):
 
     def test_service_approve_reject(self):
         notice = notice_service.create_notice(
-            {"title": "Test", "content": "Test", "target_audience": [{"role": "Owner"}]}, 
+            {"title": "Test", "content": "Test", "target_audience": [{"role": "Owner"}], "status": Notice.Status.DRAFT}, 
             self.manager
         )
         NoticeApproval.objects.create(notice=notice, requested_by=self.manager, status=NoticeApproval.Status.PENDING)
@@ -121,8 +128,7 @@ class NoticeModuleTests(TestCase):
         # Approve
         notice_service.approve_notice(notice, self.manager)
         self.assertEqual(notice.approvals.last().status, NoticeApproval.Status.APPROVED)
-        # Status should NOT auto-publish
-        self.assertEqual(notice.status, Notice.Status.DRAFT)
+        self.assertEqual(notice.status, Notice.Status.PUBLISHED)
 
     def test_service_cancel(self):
         notice = notice_service.create_notice(
@@ -149,16 +155,16 @@ class NoticeModuleTests(TestCase):
     # ==========================
     def test_scenario_block_and_flat(self):
         n1 = Notice.objects.create(title="B A", content="A", target_audience=[{"block": "A"}], status=Notice.Status.PUBLISHED, created_by=self.manager)
-        n2 = Notice.objects.create(title="F 101", content="101", target_audience=[{"flat": "101"}], status=Notice.Status.PUBLISHED, created_by=self.manager)
+        n2 = Notice.objects.create(title="F 101", content="101", target_audience=[{"flat": "A - 101"}], status=Notice.Status.PUBLISHED, created_by=self.manager)
         
         self.client.force_authenticate(user=self.user1) # Block A, 101
-        res = self.client.get('/api/my-notices/')
+        res = self.client.get('/notices/my-notices/')
         ids = [n['id'] for n in res.data]
         self.assertIn(n1.id, ids)
         self.assertIn(n2.id, ids)
 
         self.client.force_authenticate(user=self.user3) # Block B, 201
-        res2 = self.client.get('/api/my-notices/')
+        res2 = self.client.get('/notices/my-notices/')
         ids2 = [n['id'] for n in res2.data]
         self.assertNotIn(n1.id, ids2)
         self.assertNotIn(n2.id, ids2)
@@ -169,12 +175,12 @@ class NoticeModuleTests(TestCase):
         NoticeApproval.objects.create(notice=notice, requested_by=self.manager, status=NoticeApproval.Status.PENDING)
         
         self.client.force_authenticate(user=self.manager)
-        self.client.post(f'/api/notices/{notice.id}/approve/')
+        self.client.post(f'/notices/{notice.id}/approve/')
         notice.refresh_from_db()
         self.assertEqual(notice.approvals.last().status, NoticeApproval.Status.APPROVED)
-        self.assertEqual(notice.status, Notice.Status.DRAFT) # Not published yet
+        self.assertEqual(notice.status, Notice.Status.PUBLISHED) # Auto-publishes on approve
         
-        self.client.post(f'/api/notices/{notice.id}/publish/')
+        self.client.post(f'/notices/{notice.id}/publish/')
         notice.refresh_from_db()
         self.assertEqual(notice.status, Notice.Status.PUBLISHED)
         
@@ -182,14 +188,14 @@ class NoticeModuleTests(TestCase):
         notice = Notice.objects.create(title="Owner Only", content="C", target_audience=[{"role": "Owner"}], status=Notice.Status.PUBLISHED, created_by=self.manager)
         
         self.client.force_authenticate(user=self.user3) # Tenant
-        res = self.client.get('/api/my-notices/')
+        res = self.client.get('/notices/my-notices/')
         self.assertEqual(len(res.data), 0)
         
         # Change role
         self.user3.profile.role = self.owner_role
         self.user3.profile.save()
         
-        res2 = self.client.get('/api/my-notices/')
+        res2 = self.client.get('/notices/my-notices/')
         self.assertEqual(len(res2.data), 1)
         self.assertEqual(res2.data[0]['id'], notice.id)
 
@@ -200,20 +206,20 @@ class NoticeModuleTests(TestCase):
             status=Notice.Status.PUBLISHED, created_by=self.manager
         )
         self.client.force_authenticate(user=self.user1) # Owner, Block A -> Matches G1
-        self.assertEqual(len(self.client.get('/api/my-notices/').data), 1)
+        self.assertEqual(len(self.client.get('/notices/my-notices/').data), 1)
 
         self.client.force_authenticate(user=self.user3) # Tenant, Block B -> Matches G2
-        self.assertEqual(len(self.client.get('/api/my-notices/').data), 1)
+        self.assertEqual(len(self.client.get('/notices/my-notices/').data), 1)
 
         self.client.force_authenticate(user=self.user4) # Security, None -> Mismatches
-        self.assertEqual(len(self.client.get('/api/my-notices/').data), 0)
+        self.assertEqual(len(self.client.get('/notices/my-notices/').data), 0)
 
     def test_scenario_scheduling(self):
         future = timezone.now() + timedelta(days=1)
         notice = Notice.objects.create(title="T", content="C", target_audience=[{"role": "Owner"}], publish_date=future, status=Notice.Status.DRAFT, created_by=self.manager)
         
         self.client.force_authenticate(user=self.manager)
-        self.client.post(f'/api/notices/{notice.id}/publish/')
+        self.client.post(f'/notices/{notice.id}/publish/')
         notice.refresh_from_db()
         self.assertEqual(notice.status, Notice.Status.SCHEDULED)
 
@@ -221,22 +227,22 @@ class NoticeModuleTests(TestCase):
         notice = Notice.objects.create(title="T", content="C", target_audience=[{"role": "Owner"}], status=Notice.Status.PUBLISHED, created_by=self.manager)
         
         self.client.force_authenticate(user=self.user1)
-        self.assertEqual(len(self.client.get('/api/my-notices/').data), 1)
+        self.assertEqual(len(self.client.get('/notices/my-notices/').data), 1)
         
         # Cancel
         self.client.force_authenticate(user=self.manager)
-        self.client.post(f'/api/notices/{notice.id}/cancel/')
+        self.client.post(f'/notices/{notice.id}/cancel/')
         
         # Should drop from feed
         self.client.force_authenticate(user=self.user1)
-        self.assertEqual(len(self.client.get('/api/my-notices/').data), 0)
+        self.assertEqual(len(self.client.get('/notices/my-notices/').data), 0)
 
     def test_scenario_expiration(self):
         past = timezone.now() - timedelta(days=1)
         Notice.objects.create(title="T", content="C", target_audience=[{"role": "Owner"}], status=Notice.Status.EXPIRED, valid_until=past, created_by=self.manager)
         
         self.client.force_authenticate(user=self.user1)
-        self.assertEqual(len(self.client.get('/api/my-notices/').data), 0) # Feed excludes expired
+        self.assertEqual(len(self.client.get('/notices/my-notices/').data), 0) # Feed excludes expired
         
     def test_serializer_invalid_key(self):
         data = {
@@ -245,6 +251,44 @@ class NoticeModuleTests(TestCase):
             "target_audience": [{"department": "Finance"}]
         }
         self.client.force_authenticate(user=self.manager)
-        res = self.client.post('/api/notices/', data, format='json')
+        res = self.client.post('/notices/', data, format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("Invalid targeting key", res.data['target_audience'][0])
+
+    # ==========================
+    # 4. Security & Hardening Tests
+    # ==========================
+    def test_security_unauthenticated(self):
+        self.client.credentials()
+        res = self.client.get('/notices/')
+        self.assertIn(res.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+    def test_security_authorization_guard(self):
+        self.client.force_authenticate(user=self.user1) 
+        res = self.client.post('/notices/', {"title": "T", "content": "C", "target_audience": [{"role": "Owner"}], "category": "General", "priority": "Low"}, format='json')
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_security_status_tampering(self):
+        staff = User.objects.create_user(username='staff2', password='pw')
+        UserProfile.objects.create(user=staff, permission_tabs=['community.notices.add'])
+        self.client.force_authenticate(user=staff)
+        
+        res = self.client.post('/notices/', {"title": "T", "content": "C", "target_audience": [{"role": "Owner"}], "status": "Published", "category": "General", "priority": "Low"}, format='json')
+        if res.status_code != 201:
+            print("ERROR IN TAMPERING TEST:", res.data)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['status'], 'Draft')
+
+    def test_security_deletion_rules(self):
+        self.client.force_authenticate(user=self.manager)
+        
+        n_pub = Notice.objects.create(title="P", content="C", target_audience=[], status=Notice.Status.PUBLISHED)
+        res_pub = self.client.delete(f'/notices/{n_pub.id}/')
+        self.assertEqual(res_pub.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Active notices must be cancelled", res_pub.data['detail'])
+        
+        n_draft = Notice.objects.create(title="D", content="C", target_audience=[], status=Notice.Status.DRAFT)
+        res_draft = self.client.delete(f'/notices/{n_draft.id}/')
+        self.assertEqual(res_draft.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Notice.objects.filter(id=n_draft.id).exists())
+

@@ -19,7 +19,15 @@ class ResidentNoticeListAPIView(APIView):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
             
-        notices = Notice.objects.filter(status=Notice.Status.PUBLISHED).order_by('-publish_date')
+        from django.db.models import Q
+        from django.utils import timezone
+        
+        now = timezone.now()
+        notices = Notice.objects.filter(
+            status=Notice.Status.PUBLISHED
+        ).filter(
+            Q(valid_until__isnull=True) | Q(valid_until__gt=now)
+        ).order_by('-publish_date')
         targeted_notices = get_targeted_notices_for_user(request.user, notices)
         
         serializer = NoticeSerializer(targeted_notices, many=True)
