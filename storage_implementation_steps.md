@@ -67,14 +67,28 @@ Client -> Django (auth/validate) -> Generate Signed Upload URL + Proof Token -> 
 - Upgraded `MediaDownloadView` to act as a Dynamic Authorization Dispatcher.
 - Enforced strict object-level access policies dynamically (verifying `created_by_id`, `assigned_to_id`, and `has_perm` checks) before issuing Signed URLs for private files.
 
-## Step 12 — CDN
-- Finalize CDN configuration, caching behavior, cache invalidation, and range-request behavior for large media playback.
+## Step 12 — Verify CDN Finalization
+The storage architecture is essentially complete. The remaining work is primarily verification:
+- [ ] 12.1 Verify Supabase CDN behavior
+- [ ] 12.2 Verify signed URL + CDN interaction
+- [ ] 12.3 Verify Cache-Control behavior
+- [ ] 12.4 Verify video Range requests
+- [ ] 12.5 Verify large-file playback
+- [ ] 12.6 Decide cache duration
+- [ ] 12.7 Decide invalidation strategy
+- [ ] 12.8 Test DEV and PROD separately
+- [ ] 12.9 Document final CDN configuration
+
+*Crucial testing scenarios:*
+- **Image**: signed URL -> CDN -> browser/mobile
+- **Video**: signed URL -> Range request -> CDN -> progressive playback
 
 ---
 
 ## 🎯 Immediate Next Task
-We have successfully completed **Step 10 (Signed Download URLs)**, enabling lightning-fast direct CDN streaming via secure cryptographic tokens!
-The immediate next task is **Step 12 (CDN)**, where we will finalize the CDN configuration, caching behavior, cache invalidation, and range-request behavior for large media playback.
+We have successfully completed **Step 11 (Tighten Storage Policies)**. The Django/Supabase storage architecture is now structurally complete!
+
+The immediate next task is **Step 12 (Verify CDN Finalization)**, ensuring that signed URLs correctly leverage the CDN edge cache and support progressive video range requests. After Step 12, we will move back to the core Apt_Proj application functionality.
 
 ---
 
@@ -84,4 +98,4 @@ The immediate next task is **Step 12 (CDN)**, where we will finalize the CDN con
 1. **Environment Isolation**: We use a **single Supabase project** but maintain **separate buckets** (`APP-DEV` and `APP-PROD`) to isolate development data from production data while keeping infrastructure simple.
 2. **Access Control (Pattern C)**: We do not expose storage credentials to the frontend. All private downloads and uploads are mediated by the Django backend, which authorizes the user and generates **short-lived Signed URLs**.
 3. **Encryption**: We rely on **Provider-Managed Encryption** for data at rest. Application-level encryption is deemed unnecessary for our current threat model as it introduces significant complexity (disabling native CDN caching).
-4. **Upload Thresholds**: Standard single-part HTTP PUTs via Signed URLs for files <10MB. Chunked/resumable (TUS) uploads are recommended for files >10MB to handle network interruptions.
+4. **Upload Strategy**: Current implementation uses single-shot HTTP PUT via Signed Upload URLs. Resumable/chunked uploads (TUS) remain a future consideration for larger files if required by production usage and supported by the chosen authorization architecture.
