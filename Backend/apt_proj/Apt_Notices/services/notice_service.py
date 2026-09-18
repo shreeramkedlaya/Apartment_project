@@ -1,7 +1,8 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from ..Notices_models import Notice, NoticeApproval, NoticeAcknowledgement, NoticeAttachment
+from ..Notices_models import Notice, NoticeApproval, NoticeAcknowledgement
+from apt_proj.Apt_Storage.services.storage_service import StorageService
 
 def _trigger_publish_events(notice):
     """
@@ -27,7 +28,7 @@ def _trigger_publish_events(notice):
         import logging
         logging.getLogger(__name__).warning(f"Failed to trigger FCM: {e}")
 
-def create_notice(data, user, attachments=None):
+def create_notice(data, user, media_tokens=None):
     """
     Creates a notice. Prevents status tampering by verifying 'community.notices.approve' permission.
     """
@@ -58,16 +59,23 @@ def create_notice(data, user, attachments=None):
     data['created_by'] = user
     notice = Notice.objects.create(**data)
 
-    if attachments:
-        for file_data in attachments:
-            NoticeAttachment.objects.create(
-                notice=notice,
-                file=file_data.get('file'),
-                file_type=file_data.get('file_type', '')
-            )
+    if media_tokens:
+       stor_svc = StorageService()
+       for token_data in media_tokens:
+        media_id = token_data.get('media_id')
+        proof_token = token_data.get('proof_token')
 
-    # If created directly as Published, dispatch notification events
+        if media_id and proof_token:
+            # claims ownership and transitions from PENDING -> UPLOADED
+            stor_svc.attach_media(
+                user=user,
+                media_id=media_id,
+                proof_token=proof_token,
+                target_obj=notice
+            )
+    
     if notice.status == Notice.Status.PUBLISHED:
+        from django.db import transaction
         transaction.on_commit(lambda n=notice: _trigger_publish_events(n))
 
     return notice

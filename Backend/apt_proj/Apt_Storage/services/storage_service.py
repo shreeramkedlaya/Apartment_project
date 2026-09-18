@@ -4,6 +4,7 @@ from supabase import create_client, Client
 from django.conf import settings
 from apt_proj.Apt_Storage.exceptions import StorageException
 from apt_proj.Apt_Storage.models import Media
+from django.db import transaction
 
 class StorageService:
     _instance=None
@@ -58,7 +59,8 @@ class StorageService:
             bucket=self.bucket_name,
             is_public=is_public,
             proof_token=proof_token,
-            uploaded_by_id = user_id
+            uploaded_by_id = user_id,
+            upload_status = Media.UploadStatus.PENDING
         )
         return {
             "media_id": media.id,
@@ -66,6 +68,31 @@ class StorageService:
             "proof_token": proof_token,
             "bucket":self.bucket_name
         }
+    
+    def attach_media(self, user, media_id, proof_token, target_obj):
+        """
+        Validates the proof token and attaches a PENDING media record to the target object.
+        Transitions the media to UPLOADED atomically.
+        """
+        try:
+            with transaction.atomic():
+                # use select_for_update to prevent race conditions on same media row
+                media = Media.objects.select_for_update().get(id=media_id, proof_token=proof_token)
+
+                if media.upload_status != Media.UploadStatus.PENDING:
+                    raise StorageException("Media is already uploaded or failed. Cannot re-attach.")
+
+                if media.content_object is not None or media.content_type is not None:
+                    raise StorageException("Media already has an owner. Cannot reassign")
+
+                # bind to owner and lock state
+                media.content_object = target_obj
+                media.upload_status = Media.UploadStatus.UPLOADED
+                media.save()
+
+                return media
+        except Media.DoesNotExist:
+            raise StorageException("Invalid media ID or proof token")
     
     def generate_signed_download_url(self, object_path, expires_in=3600):
         """

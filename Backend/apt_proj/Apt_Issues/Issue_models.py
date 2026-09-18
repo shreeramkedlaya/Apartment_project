@@ -1,17 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from apt_proj.Apt_Common.models import TimeStampedModel
+from django.contrib.contenttypes.fields import GenericRelation
 
 User = get_user_model()
-
-class TimeStampedModel(models.Model):
-    """Abstract base that adds created_at / updated_at to any model."""
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-        app_label = 'apt_proj'
 
 class IssueCategory(TimeStampedModel):
     class Meta:
@@ -27,10 +20,6 @@ class IssueCategory(TimeStampedModel):
         return self.name
 
 class Issue(TimeStampedModel):
-    class Meta:
-        app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_issue"'
-        
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     
@@ -67,6 +56,14 @@ class Issue(TimeStampedModel):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_issues')
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_issues')
 
+
+    # add the reverse generic relation
+    media = GenericRelation('apt_proj.Media')
+
+    class Meta:
+        app_label = 'apt_proj'
+        db_table = '"apt_data"."apt_proj_issue"'
+
     def __str__(self):
         return f"Issue #{self.id}: {self.title}"
 
@@ -81,16 +78,3 @@ class IssueTimeline(TimeStampedModel):
     
     def __str__(self):
         return f"Timeline for Issue #{self.issue.id}"
-
-class IssueAttachment(TimeStampedModel):
-    class Meta:
-        app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_issueattachment"'
-        ordering = ['created_at']
-        
-    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='issues/attachments/')
-    
-    def __str__(self):
-        return f"Attachment for Issue #{self.issue.id}"
-

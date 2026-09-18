@@ -8,16 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from ..Notices_models import Notice
 from ..serializers.notice_serializer import NoticeSerializer
 from ..services import notice_service
-
-def has_perm(user, perm_id):
-    if not user or not user.is_authenticated:
-        return False
-    if user.is_superuser:
-        return True
-    try:
-        return perm_id in user.profile.get_effective_permissions()
-    except Exception:
-        return False
+from apt_proj.Apt_Common.utils import has_perm
 
 class NoticeBaseAPIView(APIView):
     """Base class providing the get_object helper as per backend_guidelines.md."""
@@ -38,15 +29,18 @@ class NoticeListCreateAPIView(APIView):
     def post(self, request):
         if not has_perm(request.user, 'community.notices.add'):
             return Response(status=status.HTTP_403_FORBIDDEN)
+
+
         serializer = NoticeSerializer(data=request.data)
         if serializer.is_valid():
             user = request.user if request.user.is_authenticated else None
-            attachments_data = request.data.get('attachments', None)
+            # Extract media_tokens instead of multipart attachments
+            media_tokens = request.data.get('media_tokens', None)
             
             notice = notice_service.create_notice(
                 data=serializer.validated_data,
                 user=user,
-                attachments=attachments_data
+                media_tokens=media_tokens
             )
             return Response(NoticeSerializer(notice).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

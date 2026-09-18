@@ -8,7 +8,7 @@ from apt_proj.pagination import StatsPagination
 
 from ..Issue_models import Issue, IssueTimeline
 from ..serializers.issue_serializers import IssueSerializer, IssueListSerializer
-from ..services.issue_service import pack_metadata, is_valid_transition, handle_attachments, update_issue_timeline
+from ..services.issue_service import pack_metadata, is_valid_transition, handle_media_tokens, update_issue_timeline
 
 class IssueAPIView(APIView):
     permission_classes = [IsAuthenticated] 
@@ -77,9 +77,13 @@ class IssueAPIView(APIView):
         serializer = IssueSerializer(data=data)
         if serializer.is_valid():
             user = request.user if request.user.is_authenticated else None
+
             issue = serializer.save(created_by=user)
             timeline = IssueTimeline.objects.create(issue=issue, history=[])
-            handle_attachments(request, issue, timeline.id, None)
+
+            media_tokens = request.data.get('media_tokens',[])
+            handle_media_tokens(issue, media_tokens, user, timeline.id,None)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -107,7 +111,11 @@ class IssueAPIView(APIView):
                 timeline, event_id = update_issue_timeline(updated_issue, user, old_status, new_status, resolution_notes)
                 timeline_id = timeline.id
             
-            handle_attachments(request, updated_issue, timeline_id, event_id)
+            media_tokens = request.data.get('media_tokens',[])
+            handle_media_tokens(
+                updated_issue,media_tokens,
+                request.user if request.user.is_authenticated else None,
+                timeline_id, event_id)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

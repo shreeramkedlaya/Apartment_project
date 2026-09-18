@@ -3,7 +3,7 @@
 
 from .Apt_Accounts.Accounts_models import UserProfile, Block, Flat
 from .Apt_Issues.Issue_models import Issue, IssueTimeline
-from .Apt_Notices.Notices_models import Notice, NoticeAttachment, NoticeApproval, NoticeAcknowledgement
+from .Apt_Notices.Notices_models import Notice, NoticeApproval, NoticeAcknowledgement
 from .Apt_Storage.models import Media
 
 __all__ = [
@@ -13,7 +13,6 @@ __all__ = [
     "Issue",
     "IssueTimeline",
     "Notice",
-    "NoticeAttachment",
     "NoticeApproval",
     "NoticeAcknowledgement",
     "Media"

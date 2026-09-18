@@ -2,7 +2,8 @@ import uuid
 from django.utils import timezone
 from apt_proj.Apt_Common.BackgroundRunner import run_in_background
 from apt_proj.Apt_Notifications.tasks import send_notification_task
-from ..Issue_models import Issue, IssueTimeline, IssueAttachment
+from ..Issue_models import Issue, IssueTimeline
+from apt_proj.Apt_Storage.services.storage_service import StorageService
 
 def pack_metadata(data, existing_metadata=None):
     metadata = existing_metadata.copy() if existing_metadata else {}
@@ -28,7 +29,7 @@ def is_valid_transition(old_status, new_status):
     }
     return new_status in valid_map.get(old_status, [])
 
-def handle_attachments(request, issue, timeline_id=None, event_id=None):
+""" def handle_attachments(request, issue, timeline_id=None, event_id=None):
     attachments = request.FILES.getlist('attachments')
     if not attachments:
         return
@@ -43,6 +44,33 @@ def handle_attachments(request, issue, timeline_id=None, event_id=None):
         for event in timeline.history:
             if event.get('id') == event_id:
                 event['attachment_ids'] = attachment_ids
+                break
+        timeline.save(update_fields=['history', 'updated_at']) """
+
+
+def handle_media_tokens(issue, media_tokens, user, timeline_id=None, event_id=None):
+    if not media_tokens: return
+
+    stor_svc = StorageService()
+    attach_media_ids = []
+
+    for token_data in media_tokens:
+        media_id = token_data.get('media_id')
+        proof_token = token_data.get('proof_token')
+
+        if media_id and proof_token:
+            media = stor_svc.attach_media(
+                user=user,
+                media_id=media_id,
+                proof_token=proof_token,
+                target_obj=issue
+            )
+            attach_media_ids.append(media_id)
+    if timeline_id and event_id and attach_media_ids:
+        timeline = IssueTimeline.objects.get(id=timeline_id)
+        for event in timeline.history:
+            if event.get('id') == event_id:
+                event['media_ids'] = attach_media_ids
                 break
         timeline.save(update_fields=['history', 'updated_at'])
     

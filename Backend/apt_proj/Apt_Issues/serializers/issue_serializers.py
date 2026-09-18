@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from ..Issue_models import Issue, IssueTimeline, IssueCategory, IssueAttachment
-
+from ..Issue_models import Issue, IssueTimeline, IssueCategory
 User = get_user_model()
 
 class UserSimpleSerializer(serializers.ModelSerializer):
@@ -20,11 +19,6 @@ class IssueCategorySerializer(serializers.ModelSerializer):
         model = IssueCategory
         fields = '__all__'
 
-class IssueAttachmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IssueAttachment
-        fields = ['id', 'file', 'created_at']
-
 class IssueSerializer(serializers.ModelSerializer):
     created_by_detail = UserSimpleSerializer(source='created_by', read_only=True)
     assigned_to_detail = UserSimpleSerializer(source='assigned_to', read_only=True)
@@ -35,7 +29,6 @@ class IssueSerializer(serializers.ModelSerializer):
             return obj.timeline_record.history
         return []
         
-    attachments = IssueAttachmentSerializer(many=True, read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:

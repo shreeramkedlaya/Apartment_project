@@ -55,18 +55,17 @@ Client -> Django (auth/validate) -> Generate Signed Upload URL + Proof Token -> 
 *(Completed)*
 
 ## ➡️ Step 9 — Domain Integration (Generic Ownership)
-- **Phase 9.1 (Media Migration)**: Lock the final `Media` table design utilizing Django `GenericForeignKey` (`content_type`, `object_id`) and an explicit `UploadStatus` (`pending` -> `uploaded`). Split `StorageService` into `generate_upload_authorization` and `attach_media`.
-- **Phase 9.2 (Domain Models)**: Update `Issue`, `Notice`, and `Bill` to use `GenericRelation('apt_proj.Media')` instead of distinct attachment models (like `IssueAttachment`). Update domain services to verify proof tokens and link the existing Media rows, keeping Supabase logic strictly decoupled from domain APIs.
+- **✅ Phase 9.1 (Media Migration)**: Lock the final `Media` table design utilizing Django `GenericForeignKey` (`content_type`, `object_id`) and an explicit `UploadStatus` (`pending` -> `uploaded`). Split `StorageService` into `generate_upload_authorization` and `attach_media`. (Completed)
+- **✅ Phase 9.2 (Domain Models)**: Update `Issue`, `Notice`, and `Bill` to use `GenericRelation('apt_proj.Media')` instead of distinct attachment models (like `IssueAttachment`). Update domain services to verify proof tokens and link the existing Media rows, keeping Supabase logic strictly decoupled from domain APIs. (Completed)
 
-## Step 10 — Signed Download URLs
-- Implement secure download flows:
-  - **Backend Proxy Streaming**: For highly sensitive data, Django fetches via service key and streams raw bytes to hide the storage origin.
-  - **Temporary Signed URLs**: For standard private data, Django validates access and generates a short-lived presigned download URL.
+## ✅ Step 10 — Signed Download URLs (Completed)
+- Built `MediaDownloadView` at `GET /storage/media/<id>/download/` to grant short-lived (1-hour) cryptographic access tokens for private media.
+- Aligned with PrajaPulse architecture: Django only validates and hands off the Signed URL; all heavy video streaming happens directly from the Supabase Edge to the Client, bypassing Django memory entirely.
 
-## Step 11 — Tighten Storage Policies
-- Review object-level access policies.
-- Ensure users cannot access unrelated private media.
-- Note: Do NOT add broad UPDATE/DELETE policies. Clients should not have direct mutation permissions; deletions must be orchestrated by the `StorageService`.
+## ✅ Step 11 — Tighten Storage Policies (Completed)
+- Extracted `has_perm` into a central `Apt_Common/utils.py` helper.
+- Upgraded `MediaDownloadView` to act as a Dynamic Authorization Dispatcher.
+- Enforced strict object-level access policies dynamically (verifying `created_by_id`, `assigned_to_id`, and `has_perm` checks) before issuing Signed URLs for private files.
 
 ## Step 12 — CDN
 - Finalize CDN configuration, caching behavior, cache invalidation, and range-request behavior for large media playback.
@@ -74,7 +73,8 @@ Client -> Django (auth/validate) -> Generate Signed Upload URL + Proof Token -> 
 ---
 
 ## 🎯 Immediate Next Task
-We are currently on **Step 9.1 (Media Migration)**. The frontend uploading component is fully functional. An implementation plan has been drafted to update the core `Media` model to utilize Generic Relations and an upload status lifecycle (`PENDING` -> `UPLOADED`). Execution of this plan will commence in the next session.
+We have successfully completed **Step 10 (Signed Download URLs)**, enabling lightning-fast direct CDN streaming via secure cryptographic tokens!
+The immediate next task is **Step 12 (CDN)**, where we will finalize the CDN configuration, caching behavior, cache invalidation, and range-request behavior for large media playback.
 
 ---
 

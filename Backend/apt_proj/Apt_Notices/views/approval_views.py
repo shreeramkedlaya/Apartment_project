@@ -8,16 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from ..Notices_models import Notice
 from ..serializers.notice_approval_serializer import NoticeApprovalSerializer
 from ..services import notice_service
-
-def has_perm(user, perm_id):
-    if not user or not user.is_authenticated:
-        return False
-    if user.is_superuser:
-        return True
-    try:
-        return perm_id in user.profile.get_effective_permissions()
-    except Exception:
-        return False
+from apt_proj.Apt_Common.utils import has_perm
 
 class NoticeApproveAPIView(APIView):
     permission_classes = [IsAuthenticated]
