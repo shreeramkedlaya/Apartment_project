@@ -38,24 +38,50 @@ const CategoriesPage: React.FC = () => {
       header: 'Name',
       accessor: 'name',
       sortable: true,
+      width: 250,
+    },
+
+    {
+      header: 'Description',
+      accessor: (row: any) => row.description || '-',
+      sortable: false,
+      width: 400,
     },
     {
       header: 'Status',
       accessor: (row: any) => row.is_active ? 'Active' : 'Inactive',
       type: 'badge',
+      width: 120,
       badgeConfig: {
         'Active': { label: 'Active', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
         'Inactive': { label: 'Inactive', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }
       }
-    }
+    },
+    {
+      header: 'Created At',
+      accessor: 'created_at',
+      type: 'date',
+      sortable: true,
+      width: 180,
+    },
+    {
+      header: 'Updated At',
+      accessor: 'updated_at',
+      type: 'date',
+      sortable: true,
+      width: 180,
+    },
+
   ];
 
-  const computeStats = (_data: IssueCategoryObj[], backendStats?: any) => {
-    if (!backendStats) return [];
+  const computeStats = (data: IssueCategoryObj[]) => {
+    const total = data.length;
+    const active = data.filter(c => c.is_active).length;
+    const inactive = total - active;
     return [
-      { label: 'Total Categories', value: backendStats.total, icon: Tag, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-      { label: 'Active', value: backendStats.active, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-      { label: 'Inactive', value: backendStats.inactive, icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
+      { label: 'Total Categories', value: total, icon: Tag, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+      { label: 'Active', value: active, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+      { label: 'Inactive', value: inactive, icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
     ];
   };
 
@@ -67,7 +93,7 @@ const CategoriesPage: React.FC = () => {
           api={HelpdeskService.getCategories}
           deleteApi={canDelete ? HelpdeskService.deleteCategory : undefined}
           columns={columns}
-          defaultVisibleColumns={['Name', 'Status']}
+          defaultVisibleColumns={['Name', 'Description', 'Status', 'Created At', 'Updated At']}
           computeStats={computeStats}
           enableSearch
           searchPlaceholder="Search categories..."

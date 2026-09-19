@@ -29,40 +29,47 @@ const NoticeApprovalsPage: React.FC<NoticeApprovalsPageProps> = () => {
       type: 'text',
       accessor: 'title',
       sortable: true,
+      width: 300,
     },
     {
       header: 'Category',
       type: 'text',
       accessor: 'category',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Priority',
       type: 'text',
       accessor: 'priority',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Status',
       type: 'text',
       accessor: 'status',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Author',
       type: 'text',
       accessor: 'created_by',
+      width: 150,
     },
     {
       header: 'Created At',
       type: 'date',
       accessor: 'created_at',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Target Publish Date',
       type: 'date',
       accessor: (row: Notice) => row.publish_date || 'Immediate',
+      width: 180,
     },
   ];
 

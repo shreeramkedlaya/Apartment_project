@@ -55,6 +55,7 @@ const UserManagementPage = () => {
       header: 'User',
       type: 'user',
       accessor: (u: ManagedUser) => ({ name: u.name || u.username }),
+      width: 250,
     },
     {
       header: 'Phone',
@@ -63,6 +64,7 @@ const UserManagementPage = () => {
       accessor: 'phone_number',
       sortKey: 'phone_number',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Flat',
@@ -71,6 +73,7 @@ const UserManagementPage = () => {
       accessor: (u: ManagedUser) => u.flat_number || (u.flat ? `Block ${u.flat.block} – ${u.flat.number}` : ''),
       sortKey: 'flat_number',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Role',
@@ -88,6 +91,7 @@ const UserManagementPage = () => {
       },
       sortKey: 'role',
       sortable: true,
+      width: 180,
     },
     {
       header: 'Joined',
@@ -95,6 +99,7 @@ const UserManagementPage = () => {
       accessor: 'date_joined',
       sortKey: 'date_joined',
       sortable: true,
+      width: 150,
     },
   ];
 

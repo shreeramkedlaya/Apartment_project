@@ -11,6 +11,9 @@ export interface Column {
     sortable?: boolean;
     icon?: React.ElementType;
     badgeConfig?: Record<string, { label: string; className: string }>;
+    width?: number;
+    minWidth?: number;
+    maxWidth?: number;
 }
 
 export interface StatItem {
@@ -38,7 +41,7 @@ export interface DataTableProps {
     data?: any[];
     
     // Async Data Management
-    api?: (params: { page: number; page_size: number; search?: string; sort?: string; [key: string]: any }) => Promise<{ results: any[]; count: number; stats?: any }>;
+    api?: (params: { page: number; page_size: number; search?: string; sort?: string; [key: string]: any }) => Promise<{ results: any[]; count?: number; total?: number; stats?: any; [key: string]: any }>;
     deleteApi?: (id: string | number) => Promise<any>;
     idKey?: string; // Default: 'id'
 

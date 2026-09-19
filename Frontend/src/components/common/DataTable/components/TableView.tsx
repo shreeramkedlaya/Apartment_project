@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowUpDown, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import ActionMenu from './ActionMenu';
 import CellRenderer from './CellRenderer';
@@ -53,6 +53,61 @@ const TableView: React.FC<TableViewProps> = ({
 }) => {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
+  // --- Column Resizing State ---
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [resizingCol, setResizingCol] = useState<string | null>(null);
+  const startXRef = useRef<number>(0);
+  const startWidthRef = useRef<number>(0);
+
+  // Initialize default widths
+  useEffect(() => {
+    const initialWidths: Record<string, number> = {};
+    displayColumns.forEach((col) => {
+      const key = col.sortKey ?? (typeof col.accessor === 'string' ? col.accessor : col.header);
+      initialWidths[key] = col.width ?? 150; // Default to 150px
+    });
+    setColumnWidths(initialWidths);
+  }, [displayColumns]);
+
+  const onMouseDown = (e: React.MouseEvent, colKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingCol(colKey);
+    startXRef.current = e.clientX;
+    startWidthRef.current = columnWidths[colKey] || 150;
+  };
+
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    if (!resizingCol) return;
+    const delta = e.clientX - startXRef.current;
+    const newWidth = Math.max(50, startWidthRef.current + delta); // Min width 50px
+    setColumnWidths((prev) => ({ ...prev, [resizingCol]: newWidth }));
+  }, [resizingCol]);
+
+  const onMouseUp = useCallback(() => {
+    setResizingCol(null);
+  }, []);
+
+  useEffect(() => {
+    if (resizingCol) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [resizingCol, onMouseMove, onMouseUp]);
+
   const toggleExpandRow = (index: number) => {
     setExpandedRows((prev) => {
       const next = new Set(prev);
@@ -61,13 +116,14 @@ const TableView: React.FC<TableViewProps> = ({
       return next;
     });
   };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto overflow-y-hidden">
+      <table className="w-full text-sm table-fixed min-w-max">
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
             {enableSelection && (
-              <th className="px-5 py-3 w-10">
+              <th className="px-5 py-3 w-12 text-center">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -80,45 +136,59 @@ const TableView: React.FC<TableViewProps> = ({
               </th>
             )}
             {expandable && (
-              <th className="px-5 py-3 w-10"></th>
+              <th className="px-5 py-3 w-12"></th>
             )}
             {hasActions && (
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
                 Actions
               </th>
             )}
-            {displayColumns.map((col, i) => (
-              <th
-                key={i}
-                onClick={() => toggleSort(col)}
-                className={`px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
-                  col.className ?? ''
-                } ${
-                  col.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none' : ''
-                }`}
-              >
-                <div
-                  className={`flex items-center gap-1 ${
-                    col.className?.includes('text-right') ? 'justify-end' : ''
+            {displayColumns.map((col, i) => {
+              const colKey = col.sortKey ?? (typeof col.accessor === 'string' ? col.accessor : col.header);
+              const width = columnWidths[colKey] || col.width || 150;
+              
+              return (
+                <th
+                  key={i}
+                  style={{ width: `${width}px` }}
+                  onClick={() => toggleSort(col)}
+                  className={`relative px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
+                    col.className ?? ''
+                  } ${
+                    col.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none' : ''
                   }`}
                 >
-                  {col.header}
-                  {col.sortable && (
-                    <span className="opacity-40">
-                      {sortConfig?.key === (col.sortKey ?? col.accessor) ? (
-                        sortConfig.dir === 'asc' ? (
-                          <ChevronUp className="w-3 h-3" />
+                  <div
+                    className={`flex items-center gap-1 ${
+                      col.className?.includes('text-right') ? 'justify-end' : ''
+                    } overflow-hidden`}
+                  >
+                    <span className="truncate">{col.header}</span>
+                    {col.sortable && (
+                      <span className="opacity-40 flex-shrink-0">
+                        {sortConfig?.key === (col.sortKey ?? col.accessor) ? (
+                          sortConfig.dir === 'asc' ? (
+                            <ChevronUp className="w-3 h-3" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3" />
+                          )
                         ) : (
-                          <ChevronDown className="w-3 h-3" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3" />
-                      )}
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
+                          <ArrowUpDown className="w-3 h-3" />
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {/* Resizer Handle */}
+                  <div
+                    onMouseDown={(e) => onMouseDown(e, colKey)}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/50 dark:hover:bg-blue-500/50 transition-colors z-10 ${
+                      resizingCol === colKey ? 'bg-blue-500 dark:bg-blue-400' : 'bg-transparent'
+                    }`}
+                  />
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
@@ -190,7 +260,7 @@ const TableView: React.FC<TableViewProps> = ({
                     </td>
                   )}
                   {displayColumns.map((col, j) => (
-                    <td key={j} className={`px-5 py-4 ${col.className ?? ''}`}>
+                    <td key={j} className={`px-5 py-4 truncate ${col.className ?? ''}`}>
                       <CellRenderer col={col} row={row} />
                     </td>
                   ))}

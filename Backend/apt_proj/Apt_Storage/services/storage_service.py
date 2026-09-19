@@ -66,7 +66,8 @@ class StorageService:
             "media_id": media.id,
             "object_path": object_path,
             "proof_token": proof_token,
-            "bucket":self.bucket_name
+            "bucket": self.bucket_name,
+            "signed_url": signed_upload_url
         }
     
     def attach_media(self, user, media_id, proof_token, target_obj):

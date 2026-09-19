@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.core.cache import cache
 
 class Block(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -98,3 +101,8 @@ class UserProfile(models.Model):
         role_tabs = set(self.role.permission_tabs) if self.role else set()
         user_tabs = set(self.permission_tabs or [])
         return list(role_tabs | user_tabs)
+
+@receiver([post_save, post_delete], sender=Block)
+@receiver([post_save, post_delete], sender=Flat)
+def clear_blocks_cache(sender, **kwargs):
+    cache.delete('blocks_api_data')

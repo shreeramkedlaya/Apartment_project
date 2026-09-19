@@ -29,7 +29,7 @@ export const HelpdeskService = {
 
   updateRequest: async (id: number | string, updateData: Partial<HelpdeskRequest> | FormData, onUploadProgress?: (progressEvent: any) => void): Promise<HelpdeskRequest> => {
     const config = onUploadProgress ? { onUploadProgress } : {};
-    const { data } = await axiosInstance.put(`/issues/${id}/`, updateData, config);
+    const { data } = await axiosInstance.patch(`/issues/${id}/`, updateData, config);
     return data;
   },
 

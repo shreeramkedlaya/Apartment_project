@@ -30,10 +30,12 @@ const FileItem = ({
   onUploadComplete: (file: UploadedFile, mediaId: string, proofToken: string) => void
 }) => {
   const { uploadState, uploadFile } = useMediaUploader();
+  const hasStartedUpload = useRef(false);
 
   // Start upload on mount if it doesn't have a proofToken and hasn't failed
   useEffect(() => {
-    if (!file.proofToken && !file.uploadFailed && !uploadState) {
+    if (!file.proofToken && !file.uploadFailed && !uploadState && !hasStartedUpload.current) {
+      hasStartedUpload.current = true;
       uploadFile(file)
         .then((data) => {
           onUploadComplete(file, data.media_id, data.proof_token);
@@ -170,16 +172,19 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
   const onDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFiles(Array.from(e.dataTransfer.files));
@@ -223,6 +228,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
             type="file"
             ref={fileInputRef}
             onChange={onFileSelect}
+            onClick={(e) => e.stopPropagation()}
             multiple={maxFiles > 1}
             accept="image/*,video/*"
             className="hidden"

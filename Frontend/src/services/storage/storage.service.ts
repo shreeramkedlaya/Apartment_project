@@ -9,7 +9,7 @@ export const storageAPI = {
             file_size: file.size,
             is_public: isPublic
         }
-        const response = await axiosInstance.post('/storage/authorize-upload', payload)
+        const response = await axiosInstance.post('/storage/authorize-upload/', payload)
         return response.data
     },
 

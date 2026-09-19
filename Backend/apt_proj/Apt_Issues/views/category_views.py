@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Count
 from apt_proj.pagination import StatsPagination
 
 from ..Issue_models import IssueCategory
@@ -35,22 +35,8 @@ class IssueCategoryAPIView(APIView):
         if sort_by in valid_sort_fields:
             categories = categories.order_by(sort_by)
 
-        paginator = StatsPagination()
-        paginator.page_size = 10
-
-        paginator.stats = {
-            "total": IssueCategory.objects.count(),
-            "active": IssueCategory.objects.filter(is_active=True).count(),
-            "inactive": IssueCategory.objects.filter(is_active=False).count(),
-        }
-
-        page = paginator.paginate_queryset(categories, request)
-        if page is not None:
-            serializer = IssueCategorySerializer(page, many=True)
-            return paginator.get_paginated_response(serializer.data)
-
         serializer = IssueCategorySerializer(categories, many=True)
-        return Response({"stats": paginator.stats, "results": serializer.data})
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = IssueCategorySerializer(data=request.data)

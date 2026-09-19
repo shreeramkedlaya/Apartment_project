@@ -44,7 +44,7 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
   expandComponent,
 }, ref) => {
   const { showToast } = useToast();
-  
+
   // Internal State
   const [tableData, setTableData] = useState<any[]>(data || []);
   const [isFetching, setIsFetching] = useState(false);
@@ -105,10 +105,10 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
     if (!api) return;
     try {
       setIsFetching(true);
-      const sort = sortConfig 
-        ? (sortConfig.dir === 'desc' ? '-' : '') + sortConfig.key 
+      const sort = sortConfig
+        ? (sortConfig.dir === 'desc' ? '-' : '') + sortConfig.key
         : '';
-        
+
       const params: Record<string, any> = {
         page,
         page_size: pageSize,
@@ -125,8 +125,18 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
       const res = await api(params as { page: number; page_size: number; search?: string; sort?: string });
       const results = Array.isArray(res?.results) ? res.results : (Array.isArray(res) ? res : []);
       setTableData(results);
-      if (res?.stats) setBackendStats(res.stats);
-      if (res?.count !== undefined) setTotalItems(res.count);
+
+      if (res?.stats) {
+        setBackendStats(res.stats);
+      } else if (res && !Array.isArray(res)) {
+        setBackendStats(res);
+      }
+
+      if (res?.total !== undefined) {
+        setTotalItems(res.total);
+      } else if (res?.count !== undefined) {
+        setTotalItems(res.count);
+      }
     } catch (error) {
       console.error("DataTable fetch error:", error);
       showToast("Failed to fetch data.", "error");
@@ -157,11 +167,11 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
       showToast("No data to export", "error");
       return;
     }
-    
+
     // Create CSV header
     const visibleCols = columns.filter(c => visibleColumns.has(c.header));
     const headerRow = visibleCols.map(c => `"${c.header}"`).join(',');
-    
+
     // Create CSV rows
     const rows = tableData.map(row => {
       return visibleCols.map(c => {
@@ -172,7 +182,7 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
         return `"${strVal}"`;
       }).join(',');
     });
-    
+
     const csvContent = [headerRow, ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -296,7 +306,7 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
           />
         )}
       </div>
-      
+
       {/* Built-in Delete Modal */}
       <ConfirmModal
         isOpen={!!itemToDelete}

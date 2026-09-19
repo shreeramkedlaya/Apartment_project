@@ -4,6 +4,7 @@ import CustomDropdown from '@/components/ui/CustomDropdown';
 import type { BlockData, AuthUser } from '@/types/auth.types';
 import type { HelpdeskRequest } from '@/types/helpdesk.types';
 import { HelpdeskService } from './services/helpdesk.service';
+import { fetchBlocks } from '@/services/auth/auth.service';
 import { Droplet, Zap, Sparkles, Dumbbell, Waves, Tag } from 'lucide-react';
 import type { IssueCategoryObj } from '@/types/helpdesk.types';
 import MediaUpload from '@/components/widgets/MediaUpload';
@@ -44,7 +45,6 @@ export interface CreateRequestModalProps {
   onRequestCreated: (newReq: HelpdeskRequest) => void;
   onRequestUpdated?: (updatedReq: HelpdeskRequest) => void;
   user: AuthUser | null;
-  blocks: BlockData[];
   editRequest?: HelpdeskRequest | null;
 }
 
@@ -54,9 +54,9 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   onRequestCreated,
   onRequestUpdated,
   user,
-  blocks,
   editRequest,
 }) => {
+  const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<UploadedFile[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -78,9 +78,13 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
   const [dynamicCategories, setDynamicCategories] = useState<IssueCategoryObj[]>([]);
 
-  // Fetch Categories
+  // Fetch Categories and Blocks
   useEffect(() => {
     if (isOpen) {
+      if (blocks.length === 0) {
+        fetchBlocks().then(setBlocks).catch(console.error);
+      }
+
       HelpdeskService.getCategories().then((cats) => {
         setDynamicCategories(cats);
         if (cats.length > 0 && !editRequest && !formData.category) {
@@ -94,12 +98,30 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (editRequest) {
+        let bId: number | '' = '';
+        let fId: number | '' = '';
+        
+        if (editRequest.is_flat_specific && editRequest.flat_number && blocks.length > 0) {
+          const parts = editRequest.flat_number.split(' - ');
+          if (parts.length === 2) {
+            const [blockName, flatNum] = parts;
+            const foundBlock = blocks.find((b) => b.name.toLowerCase() === blockName.trim().toLowerCase());
+            if (foundBlock) {
+              bId = foundBlock.id;
+              const foundFlat = foundBlock.flats.find((f) => String(f.number).toLowerCase() === flatNum.trim().toLowerCase());
+              if (foundFlat) {
+                fId = foundFlat.id;
+              }
+            }
+          }
+        }
+        
         setFormData({
           title: editRequest.title,
           category: editRequest.category,
           is_flat_specific: editRequest.is_flat_specific,
-          block_id: (editRequest as any).block_id || '',
-          flat_id: (editRequest as any).flat_id || '',
+          block_id: bId,
+          flat_id: fId,
           flat_number: editRequest.flat_number || '',
           common_area: (!editRequest.is_flat_specific ? editRequest.flat_number : (editRequest as any).common_area) || GROUPED_COMMON_AREAS[0].items[0],
           description: editRequest.description,
@@ -128,7 +150,6 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         setFormData((prev) => ({
           ...prev,
           title: '',
-          category: 'Water',
           is_flat_specific: true,
           description: '',
           priority: 'Medium',
@@ -220,7 +241,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         showToast('Request created successfully', 'success');
       }
       onClose();
-      
+
       // Reset form
       setAttachments([]);
       setUploadProgress(null);
@@ -268,15 +289,15 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
           >
             {/* Progress bar background */}
             {isSubmitting && uploadProgress !== null && (
-              <div 
+              <div
                 className="absolute left-0 top-0 bottom-0 bg-blue-800 opacity-30 transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             )}
-            
+
             <span className="relative z-10">
-              {isSubmitting 
-                ? (uploadProgress !== null ? `Uploading... ${uploadProgress}%` : (editRequest ? 'Updating...' : 'Submitting...')) 
+              {isSubmitting
+                ? (uploadProgress !== null ? `Uploading... ${uploadProgress}%` : (editRequest ? 'Updating...' : 'Submitting...'))
                 : (editRequest ? 'Update Request' : 'Submit Request')}
             </span>
           </button>
@@ -438,51 +459,54 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             />
           </div>
 
-          <div className="pt-2 border-t border-gray-100">
-            <MediaUpload
-              label="Attachments (Photos/Videos)"
-              value={attachments}
-              onChange={setAttachments}
-              maxFiles={3} // Allowing multiple files just in case!
-              maxFileSizeMB={150}
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
-
-        {/* Row 4: Contact & Priority (Secondary Fields) */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0">
+          {/* Row 4: Contact & Priority (Secondary Fields) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0">
+                <label className="block text-[10px] font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  Contact
+                </label>
+                <input
+                  type="tel"
+                  name="mobile_number"
+                  required
+                  value={formData.mobile_number}
+                  onChange={(e) => handleChange('mobile_number', e.target.value)}
+                  className="w-full max-w-[140px] border-none bg-transparent p-0 text-sm font-semibold text-gray-900 dark:text-white focus:ring-0 outline-none"
+                  placeholder="Phone number"
+                />
+              </div>
+            </div>
+            <div>
               <label className="block text-[10px] font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Contact
+                Priority
               </label>
-              <input
-                type="tel"
-                name="mobile_number"
-                required
-                value={formData.mobile_number}
-                onChange={(e) => handleChange('mobile_number', e.target.value)}
-                className="w-full max-w-[140px] border-none bg-transparent p-0 text-sm font-semibold text-gray-900 dark:text-white focus:ring-0 outline-none"
-                placeholder="Phone number"
+              <CustomDropdown
+                options={[
+                  { value: 'Low', label: 'Low' },
+                  { value: 'Medium', label: 'Medium (Default)' },
+                  { value: 'High', label: 'High (Urgent)' },
+                ]}
+                value={formData.priority}
+                onChange={(val) => handleChange('priority', val)}
+                className="w-full"
               />
             </div>
           </div>
-          <div>
-            <label className="block text-[10px] font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase mb-1">
-              Priority
-            </label>
-            <CustomDropdown
-              options={[
-                { value: 'Low', label: 'Low' },
-                { value: 'Medium', label: 'Medium (Default)' },
-                { value: 'High', label: 'High (Urgent)' },
-              ]}
-              value={formData.priority}
-              onChange={(val) => handleChange('priority', val)}
-              className="w-full"
-            />
-          </div>
+
+
+        </div>
+
+
+        <div className="pt-2 border-t border-gray-100">
+          <MediaUpload
+            label="Attachments (Photos/Videos)"
+            value={attachments}
+            onChange={setAttachments}
+            maxFiles={3} // Allowing multiple files just in case!
+            maxFileSizeMB={150}
+            disabled={isSubmitting}
+          />
         </div>
 
       </div>

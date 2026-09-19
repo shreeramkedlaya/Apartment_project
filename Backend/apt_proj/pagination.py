@@ -16,13 +16,13 @@ class StatsPagination(PageNumberPagination):
     def get_paginated_response(self, data):
         response_data = {
             'count': self.page.paginator.count,
-            'next': self.get_next_link(),
-            'previous': self.get_previous_link(),
+            'total': self.page.paginator.count,
+            'has_more': self.get_next_link() is not None,
         }
         
         # Inject stats if provided
         if self.stats is not None:
-            response_data['stats'] = self.stats
+            response_data.update(self.stats)
             
         response_data['results'] = data
         return Response(response_data)

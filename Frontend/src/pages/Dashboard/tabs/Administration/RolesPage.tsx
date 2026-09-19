@@ -5,7 +5,7 @@
 
 import { useState, useRef } from 'react';
 import { Plus, ShieldCheck, CheckCircle2, XCircle, FileEdit, Users } from 'lucide-react';
-import type { Role, RoleStats } from '@/types/roles.types';
+import type { Role } from '@/types/roles.types';
 import { fetchRoles, fetchRole, deleteRole } from './services/roles.service';
 import DataTable from '@/components/common/DataTable/DataTable';
 import type { DataTableRef, Column } from '@/components/common/DataTable/types/types';
@@ -50,6 +50,7 @@ export default function RolesPage() {
       ),
       sortKey: 'name',
       sortable: true,
+      width: 250,
     },
     {
       header: 'Code',
@@ -57,11 +58,13 @@ export default function RolesPage() {
       accessor: 'code',
       sortKey: 'code',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Description',
       type: 'text',
       accessor: (r: Role) => r.description || '—',
+      width: 300,
     },
     {
       header: 'Users',
@@ -70,6 +73,7 @@ export default function RolesPage() {
       accessor: 'user_count',
       sortKey: 'user_count',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Status',
@@ -85,6 +89,7 @@ export default function RolesPage() {
       },
       sortKey: 'status',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Created',
@@ -92,18 +97,23 @@ export default function RolesPage() {
       accessor: 'created_at',
       sortKey: 'created_at',
       sortable: true,
+      width: 150,
     },
   ];
 
-  const computeStats = (_data: any[], backendStats?: RoleStats) => {
-    if (!backendStats) return [];
+  const computeStats = (data: Role[]) => {
+    const total = data.length;
+    const active = data.filter(r => r.status === 'active').length;
+    const inactive = data.filter(r => r.status === 'inactive').length;
+    const draft = data.filter(r => r.status === 'draft').length;
+    const totalUsers = data.reduce((acc, r) => acc + (r.user_count || 0), 0);
+    
     return [
-      { label: 'Total Roles', value: backendStats.total_roles, icon: ShieldCheck, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-      { label: 'Active Roles', value: backendStats.active_roles, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-      { label: 'Inactive Roles', value: backendStats.inactive_roles, icon: XCircle, color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
-      { label: 'Draft Roles', value: backendStats.draft_roles, icon: FileEdit, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-      { label: 'Total Users', value: backendStats.total_users, icon: Users, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-      { label: 'Permissions', value: backendStats.total_permissions, icon: ShieldCheck, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800' },
+      { label: 'Total Roles', value: total, icon: ShieldCheck, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+      { label: 'Active Roles', value: active, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+      { label: 'Inactive Roles', value: inactive, icon: XCircle, color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
+      { label: 'Draft Roles', value: draft, icon: FileEdit, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+      { label: 'Total Users', value: totalUsers, icon: Users, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
     ];
   };
 

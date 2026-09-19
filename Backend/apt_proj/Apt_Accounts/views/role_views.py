@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
-from apt_proj.pagination import StatsPagination
+from django.db.models import Q
 
 from ..Accounts_models import Role, UserProfile
 from ..serializers.role_serializers import RoleSerializer, RoleDetailSerializer
@@ -46,22 +46,8 @@ class RoleAPIView(APIView):
         else:
             roles = roles.order_by('-created_at')
 
-        # Pagination & Stats
-        paginator = StatsPagination()
-        all_ids = load_all_permission_ids()
-        total_users = UserProfile.objects.filter(role__isnull=False).count()
-
-        paginator.stats = {
-            "total_roles": Role.objects.count(),
-            "active_roles": Role.objects.filter(status='active').count(),
-            "inactive_roles": Role.objects.filter(status='inactive').count(),
-            "total_system_permissions": len(all_ids),
-            "users_with_roles": total_users
-        }
-
-        page = paginator.paginate_queryset(roles, request)
-        serializer = RoleSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = RoleSerializer(roles, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = RoleDetailSerializer(data=request.data)

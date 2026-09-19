@@ -30,51 +30,61 @@ const NoticeBoardPage: React.FC = () => {
       type: 'text',
       accessor: 'title',
       sortable: true,
+      width: 300,
     },
     {
       header: 'Category',
       type: 'text',
       accessor: 'category',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Priority',
       type: 'text',
       accessor: 'priority',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Status',
       type: 'text',
       accessor: 'status',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Publish Date',
       type: 'date',
       accessor: 'publish_date',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Author',
       type: 'text',
       accessor: 'created_by', // We might need to map this if it's an ID
+      width: 150,
     },
     {
       header: 'Requires Ack',
       type: 'text',
       accessor: (row: Notice) => row.requires_acknowledgement ? 'Yes' : 'No',
+      width: 120,
     },
   ];
 
-  const computeStats = (_data: Notice[], backendStats?: any) => {
-    // If we want real stats, we can pass them from the backend
-    if (!backendStats) return [];
+  const computeStats = (data: Notice[]) => {
+    const total = data.length;
+    const published = data.filter(n => n.status === 'Published').length;
+    const draft = data.filter(n => n.status === 'Draft').length;
+    const scheduled = data.filter(n => n.status === 'Scheduled').length;
+    
     return [
-      { label: 'Total Notices', value: backendStats.total, icon: Bell, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-      { label: 'Published', value: backendStats.published, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-      { label: 'Draft', value: backendStats.draft, icon: FileText, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-50 dark:bg-gray-900/20' },
-      { label: 'Scheduled', value: backendStats.scheduled, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+      { label: 'Total Notices', value: total, icon: Bell, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+      { label: 'Published', value: published, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+      { label: 'Draft', value: draft, icon: FileText, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-50 dark:bg-gray-900/20' },
+      { label: 'Scheduled', value: scheduled, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
     ];
   };
 

@@ -4,7 +4,11 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.db import transaction
 from apt_proj.pagination import StatsPagination
+from django.contrib.auth import get_user_model
+from apt_proj.Apt_Notifications.tasks import send_notification_task
+import logging
 
 from ..Issue_models import Issue, IssueTimeline
 from ..serializers.issue_serializers import IssueSerializer, IssueListSerializer
@@ -70,8 +74,11 @@ class IssueAPIView(APIView):
                 return paginator.get_paginated_response(serializer.data)
 
             serializer = IssueListSerializer(issues, many=True)
-            return Response({"stats": paginator.stats, "results": serializer.data})
+            response_data = {"results": serializer.data}
+            response_data.update(paginator.stats)
+            return Response(response_data)
 
+    @transaction.atomic
     def post(self, request):
         data = pack_metadata(request.data)
         serializer = IssueSerializer(data=data)
@@ -84,9 +91,28 @@ class IssueAPIView(APIView):
             media_tokens = request.data.get('media_tokens',[])
             handle_media_tokens(issue, media_tokens, user, timeline.id,None)
 
+            # Notify Admins/Managers
+            try:
+                User = get_user_model()
+                manager_ids = list(User.objects.filter(
+                    profile__role__name__in=['admin','manager']
+                ).values_list('id', flat=True))
+                
+                if manager_ids:
+                    creator_name = user.first_name or user.username if user else "Resident"
+                    send_notification_task.delay(
+                        title="New Helpdesk Request",
+                        body=f"New request '{issue.title}' raised by {creator_name}.",
+                        data={"event_type": "issue_created", "issue_id": issue.id},
+                        user_ids=manager_ids
+                    )
+            except Exception as e:
+                logging.error(f"Failed to send creation notification: {e}")
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @transaction.atomic
     def put(self, request, pk):
         issue = self.get_object(request, pk)
         old_status = issue.status
@@ -110,6 +136,18 @@ class IssueAPIView(APIView):
                 user = request.user if request.user.is_authenticated else None
                 timeline, event_id = update_issue_timeline(updated_issue, user, old_status, new_status, resolution_notes)
                 timeline_id = timeline.id
+                
+                # Notify Creator
+                if old_status != new_status and updated_issue.created_by:
+                    try:
+                        send_notification_task.delay(
+                            title="Request Status Updated",
+                            body=f"Your request '{updated_issue.title}' is now {new_status}.",
+                            data={"event_type": "issue_updated", "issue_id": updated_issue.id},
+                            user_ids=[updated_issue.created_by.id]
+                        )
+                    except Exception as e:
+                        logging.error(f"Failed to send update notification: {e}")
             
             media_tokens = request.data.get('media_tokens',[])
             handle_media_tokens(
@@ -119,6 +157,7 @@ class IssueAPIView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @transaction.atomic
     def patch(self, request, pk):
         issue = self.get_object(request, pk)
         old_status = issue.status
@@ -142,8 +181,24 @@ class IssueAPIView(APIView):
                 user = request.user if request.user.is_authenticated else None
                 timeline, event_id = update_issue_timeline(updated_issue, user, old_status, new_status, resolution_notes)
                 timeline_id = timeline.id
+                
+                # Notify Creator
+                if old_status != new_status and updated_issue.created_by:
+                    try:
+                        send_notification_task.delay(
+                            title="Request Status Updated",
+                            body=f"Your request '{updated_issue.title}' is now {new_status}.",
+                            data={"event_type": "issue_updated", "issue_id": updated_issue.id},
+                            user_ids=[updated_issue.created_by.id]
+                        )
+                    except Exception as e:
+                        logging.error(f"Failed to send update notification: {e}")
             
-            handle_attachments(request, updated_issue, timeline_id, event_id)
+            media_tokens = request.data.get('media_tokens',[])
+            handle_media_tokens(
+                updated_issue,media_tokens,
+                request.user if request.user.is_authenticated else None,
+                timeline_id, event_id)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

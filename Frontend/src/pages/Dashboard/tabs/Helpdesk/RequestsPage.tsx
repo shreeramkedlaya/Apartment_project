@@ -1,9 +1,6 @@
 import DataTable from '@/components/common/DataTable/DataTable';
 import type { Column } from '@/components/common/DataTable/types/types';
 import { useAuth } from '@/context/AuthContext';
-import { fetchBlocks } from '@/services/auth/auth.service';
-import { HelpdeskService } from './services/helpdesk.service';
-import type { BlockData } from '@/types/auth.types';
 import type { HelpdeskRequest } from '@/types/helpdesk.types';
 import { AlertCircle, CheckCircle2, Clock, Plus, Ticket, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
@@ -11,21 +8,16 @@ import type { DataTableRef } from '@/components/common/DataTable/types/types';
 import CreateRequestModal from './CreateRequestModal';
 import RequestDetailsPanel from './RequestDetailsPanel';
 import UpdateStatusModal from './UpdateStatusModal';
+import { HelpdeskService } from './services/helpdesk.service';
 
 const RequestsPage: React.FC = () => {
   const { user, hasPermission } = useAuth();
   const tableRef = useRef<DataTableRef>(null);
-  const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<HelpdeskRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [requestToEdit, setRequestToEdit] = useState<HelpdeskRequest | null>(null);
   const [requestToUpdateStatus, setRequestToUpdateStatus] = useState<HelpdeskRequest | null>(null);
-
-  // Load Blocks from DB
-  useEffect(() => {
-    fetchBlocks().then(setBlocks).catch(console.error);
-  }, []);
 
   // Listen for real-time issue updates
   useEffect(() => {
@@ -53,6 +45,7 @@ const RequestsPage: React.FC = () => {
       type: 'text',
       accessor: 'id',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Title',
@@ -65,34 +58,40 @@ const RequestsPage: React.FC = () => {
       ),
       sortable: true,
       sortKey: 'title',
+      width: 300,
     },
     {
       header: 'Category',
       type: 'text',
       accessor: 'category',
       sortable: true,
+      width: 150,
     },
     {
       header: 'Location',
       type: 'custom',
       accessor: (i: HelpdeskRequest) => i.is_flat_specific ? (i.flat_number || 'Flat') : 'Common Area',
+      width: 150,
     },
     {
       header: 'Created By',
       type: 'custom',
       accessor: (i: HelpdeskRequest) => i.created_by?.name || 'Resident',
+      width: 150,
     },
     {
       header: 'Priority',
       type: 'text',
       accessor: 'priority',
       sortable: true,
+      width: 120,
     },
     {
       header: 'Status',
       type: 'text',
       accessor: 'status',
       sortable: true,
+      width: 120,
     },
   ];
 
@@ -100,7 +99,7 @@ const RequestsPage: React.FC = () => {
     if (!backendStats) return [];
     return [
       { label: 'Total Requests', value: backendStats.total, icon: Ticket, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-      { label: 'Pending', value: backendStats.pending, icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
+      { label: 'Pending', value: backendStats.open, icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
       { label: 'In Progress', value: backendStats.in_progress, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
       { label: 'Resolved', value: backendStats.resolved, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
     ];
@@ -237,7 +236,6 @@ const RequestsPage: React.FC = () => {
           }
         }}
         user={user}
-        blocks={blocks}
       />
 
       {/* Update Status Modal */}

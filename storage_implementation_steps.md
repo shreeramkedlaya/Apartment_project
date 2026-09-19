@@ -67,17 +67,17 @@ Client -> Django (auth/validate) -> Generate Signed Upload URL + Proof Token -> 
 - Upgraded `MediaDownloadView` to act as a Dynamic Authorization Dispatcher.
 - Enforced strict object-level access policies dynamically (verifying `created_by_id`, `assigned_to_id`, and `has_perm` checks) before issuing Signed URLs for private files.
 
-## Step 12 — Verify CDN Finalization
+## ✅ Step 12 — Verify CDN Finalization (Completed)
 The storage architecture is essentially complete. The remaining work is primarily verification:
-- [ ] 12.1 Verify Supabase CDN behavior
-- [ ] 12.2 Verify signed URL + CDN interaction
-- [ ] 12.3 Verify Cache-Control behavior
-- [ ] 12.4 Verify video Range requests
-- [ ] 12.5 Verify large-file playback
-- [ ] 12.6 Decide cache duration
-- [ ] 12.7 Decide invalidation strategy
-- [ ] 12.8 Test DEV and PROD separately
-- [ ] 12.9 Document final CDN configuration
+- [x] 12.1 Verify Supabase CDN behavior
+- [x] 12.2 Verify signed URL + CDN interaction
+- [x] 12.3 Verify Cache-Control behavior (`private, max-age=3600`)
+- [x] 12.4 Verify video Range requests (`Accept-Ranges: bytes`)
+- [x] 12.5 Verify large-file playback
+- [x] 12.6 Decide cache duration (1 hour)
+- [x] 12.7 Decide invalidation strategy (UUID paths)
+- [x] 12.8 Test DEV and PROD separately
+- [x] 12.9 Document final CDN configuration
 
 *Crucial testing scenarios:*
 - **Image**: signed URL -> CDN -> browser/mobile
