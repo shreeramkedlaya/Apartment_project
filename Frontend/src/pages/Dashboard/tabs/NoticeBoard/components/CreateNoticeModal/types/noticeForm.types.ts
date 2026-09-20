@@ -3,6 +3,11 @@ import type { Notice } from '../../../services/notice.service';
 import type { Role } from '@/types/roles.types';
 import type { BlockData } from '@/types/auth.types';
 
+export interface Step {
+  id: number;
+  title: string;
+}
+
 export interface UseNoticeFormProps {
   editNotice?: Notice | null;
   onNoticeCreated: () => void;

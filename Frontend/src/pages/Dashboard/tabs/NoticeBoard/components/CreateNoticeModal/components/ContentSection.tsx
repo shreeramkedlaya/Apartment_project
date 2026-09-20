@@ -3,6 +3,8 @@ import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
 import MediaUpload, { type UploadedFile } from '@/components/widgets/MediaUpload';
 
+import { NOTICE_CATEGORIES, NOTICE_PRIORITIES } from '../utils/noticeConstants';
+
 interface ContentSectionProps {
   title: string;
   setTitle: (val: string) => void;
@@ -67,11 +69,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
           <CustomDropdown
             value={category}
             onChange={setCategory}
-            options={[
-              'General', 'Water', 'Electricity', 'Maintenance', 
-              'Security', 'Facility', 'Finance', 'Community', 
-              'Emergency', 'Event'
-            ]}
+            options={[...NOTICE_CATEGORIES]}
             placeholder="Select Category"
           />
         </div>
@@ -82,7 +80,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
             <CustomDropdown
               value={priority}
               onChange={(val: string) => setPriority(val as 'Low' | 'Medium' | 'Critical')}
-              options={['Low', 'Medium', 'Critical']}
+              options={[...NOTICE_PRIORITIES]}
               placeholder="Priority"
             />
           </div>

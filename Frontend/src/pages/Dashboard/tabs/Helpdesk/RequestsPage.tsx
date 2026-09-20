@@ -5,8 +5,8 @@ import type { HelpdeskRequest } from '@/types/helpdesk.types';
 import { AlertCircle, CheckCircle2, Clock, Plus, Ticket, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import type { DataTableRef } from '@/components/common/DataTable/types/types';
-import CreateRequestModal from './CreateRequestModal';
-import RequestDetailsPanel from './RequestDetailsPanel';
+import CreateRequestModal from './CreateRequestModal/CreateRequestModal';
+import RequestDetailsPanel from './RequestDetailsPanel/RequestDetailsPanel';
 import UpdateStatusModal from './UpdateStatusModal';
 import { HelpdeskService } from './services/helpdesk.service';
 

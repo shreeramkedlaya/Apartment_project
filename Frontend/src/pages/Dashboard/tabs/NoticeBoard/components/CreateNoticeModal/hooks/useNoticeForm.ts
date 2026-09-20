@@ -167,13 +167,6 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
         showToast('Notice updated successfully', 'success');
         onNoticeUpdated();
       } else {
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('content', content);
-        formData.append('category', category);
-        formData.append('priority', priority);
-        formData.append('requires_acknowledgement', String(requiresAck));
-
         // Determine status
         const determinedStatus = statusOverride
           ? statusOverride
@@ -181,19 +174,32 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
             ? 'Scheduled'
             : 'Published';
 
-        formData.append('status', determinedStatus);
+        const media_tokens = files
+          .filter(f => f.mediaId && f.proofToken)
+          .map(f => ({
+            media_id: f.mediaId,
+            proof_token: f.proofToken,
+          }));
 
-        if (finalPublishDate) formData.append('publish_date', finalPublishDate);
-        if (finalValidUntil) formData.append('valid_until', finalValidUntil);
-        if (finalAckBy) formData.append('acknowledge_by', finalAckBy);
+        const payload: any = {
+          title,
+          content,
+          category,
+          priority,
+          requires_acknowledgement: requiresAck,
+          status: determinedStatus,
+          target_audience: targetAudience,
+        };
 
-        formData.append('target_audience', JSON.stringify(targetAudience));
+        if (media_tokens.length > 0) {
+          payload.media_tokens = media_tokens;
+        }
 
-        files.forEach((file) => {
-          formData.append('attachments', file);
-        });
+        if (finalPublishDate) payload.publish_date = finalPublishDate;
+        if (finalValidUntil) payload.valid_until = finalValidUntil;
+        if (finalAckBy) payload.acknowledge_by = finalAckBy;
 
-        await noticeService.createNotice(formData);
+        await noticeService.createNotice(payload);
         
         if (determinedStatus === 'Draft') {
           showToast('Notice saved as draft', 'info');

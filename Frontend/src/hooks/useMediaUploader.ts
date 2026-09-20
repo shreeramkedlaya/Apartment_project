@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import imageCompression from "browser-image-compression";
 import { storageAPI } from "@/services/storage/storage.service";
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
@@ -18,13 +19,26 @@ export const useMediaUploader = () => {
     const uploadFile = useCallback(async (file: File) => {
         setUploadState({ file, status: 'uploading', progress: 0 });
         try {
+            let fileToUpload = file;
+            if (file.type.startsWith('image/')) {
+                try {
+                    fileToUpload = await imageCompression(file, {
+                        maxSizeMB: 0.5,
+                        maxWidthOrHeight: 1920,
+                        useWebWorker: true,
+                    });
+                } catch (err) {
+                    console.warn('[useMediaUploader] Image compression failed, uploading original', err);
+                }
+            }
+
             // 1. Authorize upload with django
-            const authdata = await storageAPI.authorizeUpload(file);
+            const authdata = await storageAPI.authorizeUpload(fileToUpload);
 
             // 2. upload binary to supabase signed url
             await storageAPI.uploadtoSignedUrl(
                 authdata.signed_url,
-                file,
+                fileToUpload,
                 (percent) => {
                     setUploadState(prev => prev ? { ...prev, progress: percent } : null);
                 }

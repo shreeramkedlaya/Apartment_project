@@ -37,6 +37,9 @@ class Media(TimeStampedModel):
     
     proof_token = models.CharField(max_length=255, null=True, blank=True, help_text="Cryptographic proof of authorized upload")
     
+    signed_url = models.URLField(max_length=2000, null=True, blank=True, help_text="Cached 7-day signed URL")
+    signed_url_expires = models.DateTimeField(null=True, blank=True)
+
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 

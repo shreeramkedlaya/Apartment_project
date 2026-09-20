@@ -1,5 +1,15 @@
 import axiosInstance from '@/services/core/axiosinstance';
 
+export interface NoticeMedia {
+  id: number;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  upload_status: string;
+  object_path?: string;
+  signed_url?: string;
+}
+
 export interface NoticeAttachment {
   id: string;
   file: string;
@@ -26,7 +36,8 @@ export interface Notice {
   acknowledge_by: string | null;
   created_at: string;
   created_by: string;
-  attachments: NoticeAttachment[];
+  attachments?: NoticeAttachment[];
+  media?: NoticeMedia[];
   acknowledgements?: NoticeAcknowledgement[]; // Mostly for managers
   user_has_acknowledged?: boolean;
 }
@@ -44,13 +55,9 @@ class NoticeService {
     return response.data;
   }
 
-  /** Create a new notice (supports file uploads via FormData) */
-  async createNotice(data: FormData): Promise<Notice> {
-    const response = await axiosInstance.post<Notice>('/notices/', data, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  /** Create a new notice (supports JSON payload with media_tokens or FormData) */
+  async createNotice(data: any): Promise<Notice> {
+    const response = await axiosInstance.post<Notice>('/notices/', data);
     return response.data;
   }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import type { Role } from '@/types/roles.types';
 import type { BlockData } from '@/types/auth.types';
+import { AUDIENCE_TYPES } from '../utils/noticeConstants';
 
 interface TargetAudienceSectionProps {
   audienceType: 'everyone' | 'roles' | 'blocks';
@@ -37,11 +38,7 @@ export const TargetAudienceSection: React.FC<TargetAudienceSectionProps> = ({
       <div className="space-y-3">
         <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Send Notice To</label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[
-            { id: 'everyone', title: 'Everyone', desc: 'Broadcast to all active members' },
-            { id: 'roles', title: 'Specific Roles', desc: 'Target specific staff or resident roles' },
-            { id: 'blocks', title: 'Blocks / Flats', desc: 'Target specific buildings or apartments' }
-          ].map(type => (
+          {AUDIENCE_TYPES.map(type => (
             <div
               key={type.id}
               onClick={() => setAudienceType(type.id as 'everyone' | 'roles' | 'blocks')}

@@ -1,10 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-
-export interface Step {
-  id: number;
-  title: string;
-}
+import type { Step } from '../types/noticeForm.types';
 
 interface ModalStepperProps {
   steps: Step[];

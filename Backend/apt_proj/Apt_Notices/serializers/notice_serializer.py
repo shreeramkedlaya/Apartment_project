@@ -2,12 +2,27 @@ from rest_framework import serializers
 from datetime import timedelta
 from django.utils import timezone
 from ..Notices_models import Notice
+from apt_proj.Apt_Storage.serializers.media_serializer import MediaSerializer, enrich_media_with_signed_urls
+
+
+class NoticeListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        notices = super().to_representation(data)
+        return enrich_media_with_signed_urls(notices, 'media')
 
 class NoticeSerializer(serializers.ModelSerializer):
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Notice
+        list_serializer_class = NoticeListSerializer
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', 'created_by']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if not self.parent or not isinstance(self.parent, serializers.ListSerializer):
+            enrich_media_with_signed_urls([ret], 'media')
+        return ret
 
     created_by = serializers.CharField(source='created_by.username', read_only=True)
     is_editable = serializers.SerializerMethodField()

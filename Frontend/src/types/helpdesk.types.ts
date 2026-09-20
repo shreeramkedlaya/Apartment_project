@@ -50,6 +50,14 @@ export interface HelpdeskRequest {
   resolution_notes?: string;
   is_escalated?: boolean;
   timeline?: RequestTimelineEntry[];
+  media?: Array<{
+    id: number;
+    original_filename: string;
+    mime_type: string;
+    file_size: number;
+    upload_status: string;
+    signed_url?: string;
+  }>;
 }
 
 export type HelpdeskIssue = HelpdeskRequest;

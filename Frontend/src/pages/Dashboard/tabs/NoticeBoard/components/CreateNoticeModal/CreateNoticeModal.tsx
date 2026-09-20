@@ -7,17 +7,11 @@ import { TargetAudienceSection } from './components/TargetAudienceSection';
 import { SchedulingSection } from './components/SchedulingSection';
 import type { UseNoticeFormProps } from './types/noticeForm.types';
 import { ModalStepper } from './components/ModalStepper';
-import type { Step } from './components/ModalStepper';
+import { MODAL_STEPS } from './utils/noticeConstants';
 
 interface CreateNoticeModalProps extends UseNoticeFormProps {
   isOpen: boolean;
 }
-
-const steps: Step[] = [
-  { id: 1, title: 'Content' },
-  { id: 2, title: 'Audience' },
-  { id: 3, title: 'Scheduling' }
-];
 
 const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
   isOpen,
@@ -130,7 +124,7 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
       >
         <div className="flex flex-col gap-4">
           <div className="pt-2 px-2">
-            <ModalStepper steps={steps} currentStep={step} />
+            <ModalStepper steps={MODAL_STEPS} currentStep={step} />
           </div>
 
           <div className="min-h-[300px] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 bg-white dark:bg-gray-900 shadow-sm">

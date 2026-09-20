@@ -104,3 +104,11 @@ class StorageService:
             return response.get('signedURL')
         except Exception as e:
             raise StorageException(f"Failed to generate signed URL for {object_path}: {str(e)}")
+
+    def generate_batch_signed_urls(self, object_paths:list, expires_in=604800): # 604800s = 7 days
+        if not object_paths: return {}
+        try:
+            response = self.client.storage.from_(self.bucket_name).create_signed_urls(object_paths, expires_in)
+            return {item.get('path'): item.get('signedURL') for item in response if 'signedURL' in item}
+        except Exception as e:
+            raise StorageException(f"Failed to generate batch signed URLs: {str(e)}")
