@@ -6,5 +6,6 @@ urlpatterns = [
     path("notices/", include("apt_proj.Apt_Notices.urls")),
     path("dashboard/", include("apt_proj.Apt_Dashboard.urls")),
     path("settings/", include('apt_proj.Apt_Settings.urls')),
-    path('storage/',include('apt_proj.Apt_Storage.urls'))
+    path('storage/',include('apt_proj.Apt_Storage.urls')),
+    path('visitors/',include('apt_proj.Apt_Visitors.urls'))
 ]

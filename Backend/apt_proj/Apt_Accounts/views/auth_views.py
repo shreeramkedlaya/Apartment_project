@@ -12,6 +12,7 @@ from ..services.auth_service import get_tokens_for_user
 from ..serializers.user_serializers import UserDetailSerializer
 from ..serializers.block_serializers import BlockSerializer
 from ..Accounts_models import Block, UserProfile, Role
+from apt_proj.Apt_Notifications.services.firebase_service import initialize_firebase
 
 User = get_user_model()
 ph = PasswordHasher()
@@ -27,6 +28,7 @@ class SignupView(APIView):
             return Response({"error": "firebase_token is required"}, status=400)
             
         try:
+            initialize_firebase()
             decoded_token = auth.verify_id_token(token)
             phone_number = decoded_token.get('phone_number')
         except Exception as e:
@@ -105,6 +107,9 @@ class LoginView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found. Please sign up."}, status=404)
             
+        if not user.is_active:
+            return Response({"error": "Your account has been blocked. Please contact the admin/manager."}, status=403)
+            
         if not hasattr(user, 'profile') or not user.profile.mpin:
             return Response({"error": "MPIN not set for this user"}, status=400)
             
@@ -129,6 +134,7 @@ class ForgotMPINView(APIView):
             return Response({"error": "MPIN must be exactly 4 digits"}, status=400)
             
         try:
+            initialize_firebase()
             decoded_token = auth.verify_id_token(token)
             phone_number = decoded_token.get('phone_number')
         except Exception as e:

@@ -40,8 +40,8 @@ export default function SignupPage() {
 
   const handleSignupStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.length < 10 || !name.trim() || !selectedFlatId) {
-      setError('Please fill in all details.');
+    if (phone.length < 10 || !name.trim()) {
+      setError('Please provide your phone number and name.');
       return;
     }
     setError('');
@@ -63,12 +63,14 @@ export default function SignupPage() {
       setError('Please enter the 6-digit OTP.');
       return;
     }
-    if (!selectedFlatId) return;
+    // removed flat requirement
     setError('');
     setLoading(true);
     try {
       const fbToken = await verifyFirebaseOTP(confirmationResult, otp);
-      const uid = await registerWithDjango(fbToken, { name, flat_id: selectedFlatId as number });
+      const payload: any = { name };
+      if (selectedFlatId) payload.flat_id = selectedFlatId;
+      const uid = await registerWithDjango(fbToken, payload);
       setDjangoUid(uid);
       setSignupStep(3);
     } catch (err: any) {
@@ -143,7 +145,7 @@ export default function SignupPage() {
         </div>
 
         <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-gray-50 dark:border-gray-800 transition-colors duration-300">
-          
+
           {signupStep > 1 && (
             <button
               onClick={() => setSignupStep(signupStep - 1 as 1 | 2)}
@@ -195,10 +197,10 @@ export default function SignupPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Block</label>
+                  <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Block (Optional)</label>
                   <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all relative bg-white dark:bg-gray-800">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Building className="w-4 h-4" /></div>
-                    <select required value={selectedBlockId} onChange={(e) => { setSelectedBlockId(Number(e.target.value)); setSelectedFlatId(''); }} className="w-full bg-transparent pl-9 pr-2 py-3 text-sm text-gray-900 dark:text-white outline-none appearance-none">
+                    <select value={selectedBlockId} onChange={(e) => { setSelectedBlockId(Number(e.target.value)); setSelectedFlatId(''); }} className="w-full bg-transparent pl-9 pr-2 py-3 text-sm text-gray-900 dark:text-white outline-none appearance-none">
                       <option value="" disabled>Select Block</option>
                       {blocks.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
@@ -207,10 +209,10 @@ export default function SignupPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Flat</label>
+                  <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Flat (Optional)</label>
                   <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all relative bg-white dark:bg-gray-800">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Home className="w-4 h-4" /></div>
-                    <select required disabled={!selectedBlockId} value={selectedFlatId} onChange={(e) => setSelectedFlatId(Number(e.target.value))} className="w-full bg-transparent pl-9 pr-2 py-3 text-sm text-gray-900 dark:text-white outline-none appearance-none disabled:opacity-50">
+                    <select disabled={!selectedBlockId} value={selectedFlatId} onChange={(e) => setSelectedFlatId(Number(e.target.value))} className="w-full bg-transparent pl-9 pr-2 py-3 text-sm text-gray-900 dark:text-white outline-none appearance-none disabled:opacity-50">
                       <option value="" disabled>Select Flat</option>
                       {selectedBlock?.flats.map(f => (
                         <option key={f.id} value={f.id}>{f.number}</option>
@@ -257,7 +259,7 @@ export default function SignupPage() {
                   <input type="password" maxLength={4} required value={mpin} onChange={(e) => setMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3.5 text-center tracking-[0.5em] font-mono text-xl text-gray-900 dark:text-white outline-none placeholder-gray-200 dark:placeholder-gray-600" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Confirm 4-Digit MPIN</label>
                 <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all relative bg-white dark:bg-gray-800">

@@ -6,18 +6,18 @@ This document tracks the end-to-end execution roadmap across all modules of the 
 
 ## 📋 Execution Order & Milestones
 
-### 🎯 Milestone 1: Notice Board Module — Phase 7 Frontend Integration (IN PROGRESS)
-- [ ] **1.1 Notice Creation Modal & Media Upload**: Replace legacy file handling with the centralized `MediaUpload.tsx` component (supporting images/PDFs and proof tokens).
-- [ ] **1.2 Dynamic Target Audience Builder**: Implement hierarchy targeting for Blocks, Flats, and User Roles.
-- [ ] **1.3 Notice Details & Signed Media URLs**: Render signed download URLs for private notice attachments in `NoticeDetailsPanel.tsx`.
-- [ ] **1.4 Resident Feed & Acknowledgement Flow**: Connect resident dashboard feed with `POST /api/notices/<id>/acknowledge/`.
-- [ ] **1.5 Manager Approval Workflow**: Verify manager notice approvals/rejections and real-time status transitions in `NoticeApprovalsPage.tsx`.
+### 🎯 Milestone 1: Notice Board Module — Phase 7 Frontend Integration (COMPLETED)
+- [x] **1.1 Notice Creation Modal & Media Upload**: Replace legacy file handling with the centralized `MediaUpload.tsx` component (supporting images/PDFs and proof tokens).
+- [x] **1.2 Dynamic Target Audience Builder**: Implement hierarchy targeting for Blocks, Flats, and User Roles.
+- [x] **1.3 Notice Details & Signed Media URLs**: Render signed download URLs for private notice attachments in `NoticeDetailsPanel.tsx`.
+- [x] **1.4 Resident Feed & Acknowledgement Flow**: Connect resident dashboard feed with `POST /api/notices/<id>/acknowledge/`.
+- [x] **1.5 Manager Approval Workflow**: Verify manager notice approvals/rejections and real-time status transitions in `NoticeApprovalsPage.tsx`.
 
 ---
 
-### 🗄️ Milestone 2: Storage Maintenance & Orphan Garbage Collector
-- [ ] **2.1 Periodic Celery Task**: Implement `purge_orphan_media` job to identify `upload_status='PENDING'` records older than 24 hours.
-- [ ] **2.2 Supabase & DB Cleanup**: Safely delete unattached Supabase storage objects and corresponding Media database rows.
+### 🗄️ Milestone 2: Storage Maintenance & Orphan Garbage Collector (COMPLETED)
+- [x] **2.1 Periodic Celery Task**: Implement `purge_orphan_media` job to identify `upload_status='PENDING'` records older than 24 hours.
+- [x] **2.2 Supabase & DB Cleanup**: Safely delete unattached Supabase storage objects and corresponding Media database rows.
 
 ---
 

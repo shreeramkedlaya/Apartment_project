@@ -30,6 +30,7 @@ export const NAVIGATION: TabConfig[] = [
     subTabs: [
       { id: "vehicles", label: "Vehicles", permissionId: "resident_services.vehicles.view" },
       { id: "receipts", label: "Receipts", permissionId: "resident_services.receipts.view" },
+      { id: "visitors", label: "Visitors", permissionId: "resident_services.visitors.view" },
     ]
   },
   {

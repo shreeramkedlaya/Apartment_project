@@ -94,12 +94,19 @@ const UserManagementPage = () => {
       width: 180,
     },
     {
-      header: 'Joined',
-      type: 'date',
-      accessor: 'date_joined',
-      sortKey: 'date_joined',
+      header: 'Status',
+      type: 'badge',
+      accessor: (u: ManagedUser) => ({
+        label: u.is_active ? 'Active' : 'Blocked',
+        status: u.is_active ? 'active' : 'inactive'
+      }),
+      badgeConfig: {
+        active: { label: '', className: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
+        inactive: { label: '', className: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800' },
+      },
+      sortKey: 'is_active',
       sortable: true,
-      width: 150,
+      width: 120,
     },
   ];
 
@@ -156,7 +163,7 @@ const UserManagementPage = () => {
         ref={tableRef}
         api={fetchUsers}
         columns={columns}
-        defaultVisibleColumns={['User', 'Phone', 'Flat', 'Role', 'Joined']}
+        defaultVisibleColumns={['User', 'Phone', 'Role', 'Status']}
         computeStats={computeStats}
         enableSearch
         searchPlaceholder="Search by name, phone, flat..."

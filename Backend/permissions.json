@@ -35,6 +35,15 @@
           { "id": "resident_services.receipts.view", "name": "View" },
           { "id": "resident_services.receipts.download", "name": "Download" }
         ]
+      },
+      {
+        "id": "resident_services.visitors",
+        "name": "Visitors",
+        "children": [
+          { "id": "resident_services.visitors.view", "name": "View" },
+          { "id": "resident_services.visitors.add", "name": "Add" },
+          { "id": "resident_services.visitors.approve", "name": "Approve/Reject" }
+        ]
       }
     ]
   },

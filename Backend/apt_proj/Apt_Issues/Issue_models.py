@@ -58,7 +58,7 @@ class Issue(TimeStampedModel):
 
 
     # add the reverse generic relation
-    media = GenericRelation('apt_proj.Media')
+    media = GenericRelation('apt_proj.Media', object_id_field='obj_id')
 
     class Meta:
         app_label = 'apt_proj'

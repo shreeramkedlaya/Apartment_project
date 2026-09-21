@@ -43,7 +43,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
       setLoadingRoles(true);
       fetchRoles()
         .then((res) => {
-          setRoles(res.results || res.roles || []);
+          setRoles(Array.isArray(res) ? res : (res.results || res.roles || []));
         })
         .catch((err) => {
           console.error('Failed to load roles in EditUserModal:', err);
@@ -66,12 +66,25 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
     setSaving(true);
     setErrorMessage(null);
 
-    const payload: UpdateUserPayload = {
-      name: name.trim(),
-      phone_number: phoneNumber.trim() || null,
-      role_id: roleId === '' ? null : Number(roleId),
-      is_active: isActive,
-    };
+    const payload: Partial<UpdateUserPayload> = {};
+    const originalName = user.name || user.username || '';
+    if (name.trim() !== originalName) payload.name = name.trim();
+
+    const originalPhone = user.phone_number || '';
+    const newPhone = phoneNumber.trim() || null;
+    if (newPhone !== originalPhone) payload.phone_number = newPhone;
+
+    const originalRole = user.role_id ?? '';
+    const newRole = roleId === '' ? null : Number(roleId);
+    if (newRole !== originalRole) payload.role_id = newRole;
+
+    const originalIsActive = user.is_active ?? true;
+    if (isActive !== originalIsActive) payload.is_active = isActive;
+
+    if (Object.keys(payload).length === 0) {
+      onClose(); // No changes made
+      return;
+    }
 
     try {
       await updateUser(user.id, payload);
@@ -172,8 +185,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
               type="button"
               onClick={() => setIsActive(true)}
               className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${isActive
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
                 }`}
             >
               <CheckCircle2 className={`w-4 h-4 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`} />
@@ -183,8 +196,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, on
               type="button"
               onClick={() => setIsActive(false)}
               className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${!isActive
-                  ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 shadow-sm'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 shadow-sm'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
                 }`}
             >
               <XCircle className={`w-4 h-4 ${!isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`} />

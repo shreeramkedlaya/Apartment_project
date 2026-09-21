@@ -46,7 +46,7 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
 
   useEffect(() => {
     fetchRoles().then((data: any) => {
-      const rolesArray = data.results || data.roles || [];
+      const rolesArray = Array.isArray(data) ? data : (data.results || data.roles || []);
       setAvailableRoles(rolesArray);
     }).catch(console.error);
     fetchBlocks().then(setAvailableBlocks).catch(console.error);

@@ -3,11 +3,13 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Loader2, Sun, Moon, ArrowLeft, Phone, Lock, KeyRound } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 import { loginWithMPIN, sendFirebaseOTP, verifyFirebaseOTP, resetDjangoMPIN } from '@/services/auth/auth.service';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -50,7 +52,13 @@ export default function LoginPage() {
       localStorage.setItem('savedPhoneNumber', phone);
       navigateToDestination();
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Login failed.');
+      const msg = err.response?.data?.error || err.message || 'Login failed.';
+      if (err.response?.status === 403) {
+        showToast(msg, 'error');
+        setError('');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -284,7 +292,7 @@ export default function LoginPage() {
                       <input type="password" maxLength={4} required value={mpin} onChange={(e) => setMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3.5 text-center tracking-[0.5em] font-mono text-xl text-gray-900 dark:text-white outline-none placeholder-gray-200 dark:placeholder-gray-600" />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Confirm New MPIN</label>
                     <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all relative bg-white dark:bg-gray-800">

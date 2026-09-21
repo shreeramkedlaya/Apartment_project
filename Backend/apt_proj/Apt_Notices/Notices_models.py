@@ -42,7 +42,7 @@ class Notice(TimeStampedModel):
     acknowledge_by = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_notices')
 
-    media = GenericRelation('apt_proj.Media')
+    media = GenericRelation('apt_proj.Media', object_id_field='obj_id')
 
     class Meta:
         app_label = 'apt_proj'

@@ -19,3 +19,6 @@ python manage.py makemigrations apt_proj
 python manage.py migrate
 
 find . -type d -name "__pycache__" -exec rm -rf {} +
+
+To start the Celery Worker (processes the background tasks)
+celery -A celery_app worker -l info -P solo

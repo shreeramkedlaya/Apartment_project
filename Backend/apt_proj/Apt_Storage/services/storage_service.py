@@ -112,3 +112,14 @@ class StorageService:
             return {item.get('path'): item.get('signedURL') for item in response if 'signedURL' in item}
         except Exception as e:
             raise StorageException(f"Failed to generate batch signed URLs: {str(e)}")
+
+    def delete_media_batch(self, object_paths:list):
+        """
+        Deletes a batch of objects from Supabase bucket
+        """
+        if not object_paths: return
+
+        try:
+            self.client.storage.from_(self.bucket_name).remove(object_paths)
+        except Exception as e:
+            raise StorageException(f"Failed to delete batch of objects: {str(e)}")

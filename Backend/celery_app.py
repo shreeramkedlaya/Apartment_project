@@ -35,4 +35,8 @@ app.conf.beat_schedule = {
         'task': 'apt_proj.Apt_Notifications.tasks.cleanup_stale_device_tokens',
         'schedule': crontab(minute=0, hour=0, day_of_week='sun'),
     },
+    'purge-orphan-media-daily': {
+        'task': 'apt_proj.Apt_Storage.tasks.purge_orphan_media',
+        'schedule': crontab(minute=0, hour=2), # Runs daily at 2:00 AM
+    },
 }

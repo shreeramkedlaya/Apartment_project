@@ -21,6 +21,7 @@ const CategoriesPage = lazy(() => import('@/pages/Dashboard/tabs/Helpdesk/Catego
 // Resident
 const VehiclesPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/VehiclesPage'));
 const ReceiptsPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/ReceiptsPage'));
+const VisitorsPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/VisitorsPage'));
 
 // Community
 const NoticesPage = lazy(() => import('@/pages/Dashboard/tabs/NoticeBoard/NoticeBoardPage'));
@@ -75,6 +76,7 @@ export default function DashboardLayout() {
       case 'resident':
         if (activeSubTab === 'vehicles') return <VehiclesPage />;
         if (activeSubTab === 'receipts') return <ReceiptsPage />;
+        if (activeSubTab === 'visitors') return <VisitorsPage />;
         return <PlaceholderPage title={`Resident Services: ${activeSubTab}`} />;
       case 'helpdesk':
         if (activeSubTab === 'requests') return <RequestsPage />;
