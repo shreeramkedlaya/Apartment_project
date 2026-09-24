@@ -22,13 +22,20 @@ This document tracks the end-to-end execution roadmap across all modules of the 
 ---
 
 ### 🛡️ Milestone 3: Resident Services & Community Features
-- [ ] **3.1 Visitor Management & Gate Pass System**: Resident pass generation, security gate check-in/out, and visitor log history.
-- [ ] **3.2 Amenity Booking**: Facility calendar, slot reservations, cancellation rules, and conflict handling.
-- [ ] **3.3 Emergency Directory & Broadcast**: Instant emergency notices, SOS triggers, and guard intercom directory.
+- [x] **3.1 Visitor Management**: Security logs the visitor at the gate -> Resident gets a 30-second window to reject the entry -> Celery automatically approves them if no action is taken. No complex pre-approval passes needed, just the live 30-second approval window.
+- [~] **3.2 Amenity Booking**: Basic reservation system focused on the Community Hall (booking slots/hours). *[Backend Complete - Frontend Pending]*
+- [ ] **3.3 Emergency Directory & Broadcast**: (See suggestions below for finalizing scope).
 
 ---
 
 ### 💳 Milestone 4: Billing & Financial Accounting Subsystem
-- [ ] **4.1 Maintenance Dues Generation**: Scheduled recurring bill generation based on square footage or flat tier.
-- [ ] **4.2 Payment Tracking & Receipt Storage**: Attach transaction proofs/receipts via the `Media` generic relation.
-- [ ] **4.3 Defaulter Analytics & Statements**: Automated overdue reminders, penalty calculation, and downloadable statements.
+- [ ] **4.1 Maintenance Dues Generation**: Manager manually generates bills which are directly assigned to the respective members/flats.
+- [ ] **4.2 Transaction Tracking**: Implement a single, unified `TransactionHistory` table (similar architecture to the generic `Media` table) for all credits/debits.
+- [ ] **4.3 Defaulter Analytics & Reminders**: Automated overdue reminders via Celery, basic penalty calculation, and simple invoice downloading directly from the frontend data tables.
+
+---
+
+### 👤 Milestone 5: Resident Profile Extensions (Proposals)
+- [ ] **5.1 Family & Co-Residents**: Allow users to add family members, dependents, or roommates to their flat.
+- [ ] **5.2 Vehicle Registration**: Allow residents to register their cars and motorcycles (Make, Model, License Plate).
+- [ ] **5.3 Emergency Contacts**: Add primary and secondary emergency contacts.

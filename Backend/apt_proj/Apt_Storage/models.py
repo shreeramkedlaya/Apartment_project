@@ -2,14 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-        app_label = 'apt_proj'
+from apt_proj.Apt_Common.models import TimeStampedModel
 
 class Media(TimeStampedModel):
     class Meta:

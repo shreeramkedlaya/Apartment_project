@@ -9,11 +9,9 @@ from ..Notices_models import Notice
 from ..serializers.notice_approval_serializer import NoticeApprovalSerializer
 from ..services import notice_service
 from apt_proj.Apt_Common.utils import has_perm
+from .base_views import NoticeBaseAPIView
 
-class NoticeApproveAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get_object(self, pk):
-        return get_object_or_404(Notice, pk=pk)
+class NoticeApproveAPIView(NoticeBaseAPIView):
 
     def post(self, request, pk):
         if not has_perm(request.user, 'community.notices.approve'):
@@ -29,11 +27,7 @@ class NoticeApproveAPIView(APIView):
         except DjangoValidationError as e:
             return Response({"detail": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
-class NoticeRejectAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(Notice, pk=pk)
+class NoticeRejectAPIView(NoticeBaseAPIView):  
 
     def post(self, request, pk):
         if not has_perm(request.user, 'community.notices.approve'):

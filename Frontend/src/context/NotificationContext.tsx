@@ -156,6 +156,29 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
             // Dispatch a global event so active tabs can refetch API data
             window.dispatchEvent(new CustomEvent('NOTICES_UPDATED', { detail: payload }));
+          } else if (payload.type === 'visitor_requested') {
+            const title = payload.title || 'Visitor Request';
+            playNotificationChime();
+
+            // Dispatch specifically to our intercept modal
+            window.dispatchEvent(new CustomEvent('VISITOR_REQUESTED', {
+              detail: {
+                log_id: payload.visitor_id,
+                title: title,
+                body: payload.body || 'A visitor is at the gate.'
+              }
+            }));
+
+          } else if (payload.type === 'visitor_approved' || payload.type === 'visitor_denied') {
+            const title = payload.title || (payload.type === 'visitor_approved' ? 'Visitor Approved' : 'Visitor Denied');
+            playNotificationChime();
+
+            if (document.visibilityState === 'visible') {
+              showToast(`👤 ${title}`, 'info');
+            }
+
+            window.dispatchEvent(new CustomEvent('VISITORS_UPDATED', { detail: payload }));
+
           } else if (payload.type === 'issue_updated') {
             const title = payload.title || 'Issue Updated';
 

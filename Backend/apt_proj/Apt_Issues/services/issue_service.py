@@ -1,9 +1,32 @@
 import uuid
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from apt_proj.Apt_Common.BackgroundRunner import run_in_background
 from apt_proj.Apt_Notifications.tasks import send_notification_task
 from ..Issue_models import Issue, IssueTimeline
 from apt_proj.Apt_Storage.services.storage_service import StorageService
+import logging
+
+def notify_issue_created (issue, creator):
+    try:
+       User = get_user_model()
+       manager_ids = list(User.objects.filter(
+        profile__role__name__in=['admin','manager']
+        ).values_list('id', flat=True))
+        
+       if manager_ids:
+           creator_name = creator.first_name or creator.username if creator else "Resident"
+           send_notification_task.apply_async(
+               kwargs={
+                   "title": "New Helpdesk Request",
+                   "body": f"New request '{issue.title}' raised by {creator_name}.",
+                    "data": {"event_type": "issue_created", "issue_id": issue.id},
+                    "user_ids": manager_ids
+                },
+                expires=60
+            )
+    except Exception as e:
+        logging.error(f"Failed to send creation notification: {e}")
 
 def pack_metadata(data, existing_metadata=None):
     metadata = existing_metadata.copy() if existing_metadata else {}

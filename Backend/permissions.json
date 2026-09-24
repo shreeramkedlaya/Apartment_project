@@ -96,7 +96,8 @@
           { "id": "community.amenities.view", "name": "View" },
           { "id": "community.amenities.add", "name": "Add" },
           { "id": "community.amenities.edit", "name": "Edit" },
-          { "id": "community.amenities.delete", "name": "Delete" }
+          { "id": "community.amenities.delete", "name": "Delete" },
+          { "id": "community.amenities.approve", "name": "Approve/Reject Bookings" }
         ]
       }
     ]

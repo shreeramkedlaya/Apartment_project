@@ -6,12 +6,29 @@ import type { DashboardSummary } from './services/dashboard.service';
 import NoticeDetailsPanel from './tabs/NoticeBoard/components/NoticeDetailsPanel';
 import type { Notice } from './tabs/NoticeBoard/services/notice.service';
 import { useDashboardNavigation } from './layouts/components/Sidebar';
+import Modal from '@/components/ui/Modal';
+import NewVisitorForm from './tabs/ResidentServices/components/NewVisitorForm';
+import { useAuth } from '@/context/AuthContext';
+
+interface QuickAccessItem {
+  name: string;
+  icon: any;
+  color: string;
+  bg: string;
+  tab?: string;
+  sub?: string;
+  onClick?: () => void;
+}
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const isGuard = user?.role === 'Security' || user?.role === 'admin' || user?.role === 'manager';
+
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+  const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
   const { setActiveTab, setActiveSubTab } = useDashboardNavigation();
 
   useEffect(() => {
@@ -28,7 +45,7 @@ export default function Dashboard() {
     fetchDashboard();
   }, []);
 
-  const quickAccessItems = [
+  const residentQuickAccessItems: QuickAccessItem[] = [
     { name: 'My Profile', icon: User, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30', tab: 'resident', sub: 'profile' },
     { name: 'Receipts', icon: Receipt, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30', tab: 'resident', sub: 'receipts' },
     { name: 'Requests', icon: MessageSquare, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30', tab: 'helpdesk', sub: 'requests' },
@@ -37,6 +54,20 @@ export default function Dashboard() {
     { name: 'Vehicles', icon: Car, color: 'text-cyan-500 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/30', tab: 'resident', sub: 'vehicles' },
     { name: 'SOS Alert', icon: AlertTriangle, color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/30', tab: 'emergency', sub: undefined },
   ];
+
+  const guardQuickAccessItems: QuickAccessItem[] = [
+    { 
+      name: 'Log Visitor', 
+      icon: User, 
+      color: 'text-indigo-600 dark:text-indigo-400', 
+      bg: 'bg-indigo-50 dark:bg-indigo-900/30', 
+      onClick: () => setIsVisitorModalOpen(true) 
+    },
+    { name: 'Visitors Log', icon: FileText, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30', tab: 'resident', sub: 'visitors' },
+    { name: 'SOS Alert', icon: AlertTriangle, color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/30', tab: 'emergency', sub: undefined },
+  ];
+
+  const quickAccessItems = isGuard ? guardQuickAccessItems : residentQuickAccessItems;
 
   if (loading) {
     return (
@@ -238,7 +269,14 @@ export default function Dashboard() {
           {quickAccessItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => { setActiveTab(item.tab); if (item.sub) setActiveSubTab(item.sub); }}
+              onClick={() => {
+                if (item.onClick) {
+                  item.onClick();
+                } else {
+                  setActiveTab(item.tab!); 
+                  if (item.sub) setActiveSubTab(item.sub);
+                }
+              }}
               className="w-24 h-28 flex flex-col items-center justify-center p-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md dark:hover:border-gray-600 transition-all group shrink-0"
             >
               <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center mb-2 group-hover:scale-105 transition-transform`}>
@@ -261,6 +299,18 @@ export default function Dashboard() {
           canManageNotices={false}
         />
       )}
+
+      {/* Visitor Quick Action Modal */}
+      <Modal
+        isOpen={isVisitorModalOpen}
+        onClose={() => setIsVisitorModalOpen(false)}
+        title="Log New Visitor"
+        description="Quickly approve and log a visitor at the gate."
+        icon={<User className="w-5 h-5" />}
+        width="lg"
+      >
+        <NewVisitorForm onComplete={() => setIsVisitorModalOpen(false)} />
+      </Modal>
 
     </div>
   );

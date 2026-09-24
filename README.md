@@ -44,9 +44,8 @@ This platform serves multiple stakeholders — residents, management staff, secu
 ├── .agents/                    # Core Architectural Rules & Design Documentation
 │   ├── docs/                   # Master requirements, DB schema, Frontend/Backend primers
 │   └── rules/                  # Strict LLM/Agent coding rules
-├── workspace_simple/           
-│   ├── Backend/                # Django REST Backend & Celery
-│   └── Frontend/               # React Vite Frontend
+├── Backend/                    # Django REST Backend & Celery
+├── Frontend/                   # React Vite Frontend
 └── README.md                   # This file
 ```
 
@@ -56,15 +55,15 @@ This platform serves multiple stakeholders — residents, management staff, secu
 
 ### Backend Setup
 1. Ensure **PostgreSQL** and **Redis** are running.
-2. Initialize the database schema: `psql -U postgres -f workspace_simple/Backend/db-init.sql`
-3. Navigate to the backend: `cd workspace_simple/Backend`
+2. Initialize the database schema: `psql -U postgres -f Backend/db-init.sql`
+3. Navigate to the backend: `cd Backend`
 4. Install dependencies: `pip install -r requirements.txt`
 5. Run migrations: `python manage.py migrate`
 6. Start the Daphne ASGI server: `daphne -b 0.0.0.0 -p 8000 backend.asgi:application`
 7. Start Celery Worker: `celery -A backend worker -l info -P eventlet`
 
 ### Frontend Setup
-1. Navigate to the frontend: `cd workspace_simple/Frontend`
+1. Navigate to the frontend: `cd Frontend`
 2. Install dependencies: `npm install`
 3. Start the development server: `npm run dev`
 
@@ -84,6 +83,25 @@ This platform serves multiple stakeholders — residents, management staff, secu
 10. **Resident Services:** Helpdesk complaints, facility booking, and real-time **Notices**.
 11. **Management Dashboard:** Top-level operational metrics and SLA tracking.
 12. **Administration:** Deep hierarchical RBAC and system controls.
+
+---
+
+## 🧠 Key Architectural Decisions
+
+1. **Frontend is React, NOT React Native directly** - runs as a WebView inside RN
+2. **Unified Single-Page Layout** - Instead of separate Resident and Manager layouts, the app uses a unified `DashboardLayout` powered by backend `permission_tabs`.
+3. **State-Based Navigation** - Routes swap components directly via an `activeTab` state rather than relying on deep URL routing.
+4. **Dashboard has a carousel** - latest bills/notices shown in a horizontal carousel at the top
+5. **Card-based design language** - "edchemy-like" structured info cards
+6. **Mobile-first design** - phone viewport, portrait orientation
+7. **Firebase + MPIN Auth** - Firebase handles OTP verification on sign-up; Django handles ultra-fast MPIN logins directly.
+8. **Backend is Domain-Driven Django** - Unified `apt_proj` app with feature domains (`Apt_Accounts`, `Apt_Issues`).
+9. **All domain models extend `TimeStampedModel`** - always adds created_at/updated_at
+10. **Residents see outcomes, not raw operational data** - core design principle
+11. **Currency**: INR, format with `toLocaleString('en-IN')`
+12. **Timezone**: Backend stores UTC; frontend converts to IST for display
+13. **Complaint lifecycle is 6 stages**: Submitted, Acknowledged, Assigned, Work In Progress, Resolved, Closed
+14. **Deliveries are deferred** - do not build until scope is confirmed
 
 ---
 

@@ -10,6 +10,7 @@ import { NAVIGATION } from '@/config/navigation';
 // Import Layout Components
 import Sidebar, { useDashboardNavigation } from './components/Sidebar';
 import Header from './components/Header';
+import VisitorInterceptModal from '../components/VisitorInterceptModal';
 
 // Lazy load page components
 const Dashboard = lazy(() => import('@/pages/Dashboard/Dashboard'));
@@ -148,7 +149,9 @@ export default function DashboardLayout() {
           </div>
         </main>
       </div>
-
+      
+      {/* Global Intercept Modals */}
+      <VisitorInterceptModal />
     </div>
   );
 }

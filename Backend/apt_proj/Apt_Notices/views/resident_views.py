@@ -9,6 +9,7 @@ from ..serializers.notice_serializer import NoticeSerializer
 from ..serializers.notice_acknowledgement_serializer import NoticeAcknowledgementSerializer
 from ..services import notice_service
 from ..services.targeting_service import get_targeted_notices_for_user
+from .base_views import NoticeBaseAPIView
 
 class ResidentNoticeListAPIView(APIView):
     """
@@ -33,10 +34,7 @@ class ResidentNoticeListAPIView(APIView):
         serializer = NoticeSerializer(targeted_notices, many=True)
         return Response(serializer.data)
 
-class NoticeAcknowledgeAPIView(APIView):
-    def get_object(self, pk):
-        return get_object_or_404(Notice, pk=pk)
-
+class NoticeAcknowledgeAPIView(NoticeBaseAPIView):
     def post(self, request, pk):
         notice = self.get_object(pk)
         try:

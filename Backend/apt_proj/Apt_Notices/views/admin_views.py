@@ -9,13 +9,7 @@ from ..Notices_models import Notice
 from ..serializers.notice_serializer import NoticeSerializer
 from ..services import notice_service
 from apt_proj.Apt_Common.utils import has_perm
-
-class NoticeBaseAPIView(APIView):
-    """Base class providing the get_object helper as per backend_guidelines.md."""
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(Notice, pk=pk)
+from .base_views import NoticeBaseAPIView
 
 class NoticeListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
