@@ -201,8 +201,7 @@ def send_notification_task(
         
         # Broadcast to each targeted user's group
         if all_users:
-            # We don't have a global group yet, but if we did we could broadcast there.
-            pass
+            async_to_sync(channel_layer.group_send)("broadcast", ws_payload)
         else:
             for uid in user_ids:
                 async_to_sync(channel_layer.group_send)(f"user_{uid}", ws_payload)

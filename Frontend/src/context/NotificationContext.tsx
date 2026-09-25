@@ -210,6 +210,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
             // Dispatch a global event so active tabs can refetch API data
             window.dispatchEvent(new CustomEvent('ISSUES_UPDATED', { detail: payload }));
+          } else if (payload.type === 'emergency_broadcast' || payload.type === 'emergency_resolved') {
+            const isBroadcast = payload.type === 'emergency_broadcast';
+            const title = payload.title || (isBroadcast ? 'EMERGENCY BROADCAST' : 'Emergency Resolved');
+            playNotificationChime();
+            
+            if (isBroadcast) {
+                // Add high priority notification
+                const newNotif: AppNotification = {
+                  id: Date.now().toString(),
+                  title: title,
+                  priority: 'Critical',
+                  timestamp: new Date(),
+                  read: false,
+                };
+                setNotifications(prev => [newNotif, ...prev]);
+                setUnreadCount(prev => prev + 1);
+            }
+            
+            // Dispatch global event for the ActiveAlertBanner
+            window.dispatchEvent(new CustomEvent('EMERGENCY_UPDATE', { detail: payload }));
           }
         } catch (err) {
           console.error('Failed to parse WebSocket message', err);

@@ -35,7 +35,7 @@ class BookingApproveAPIView(AmenityBaseAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
         booking = self.get_booking(pk)
         try:
-            updated = update_booking_status(booking, AmenityBooking.Status.APPROVED, request.user)
+            updated = update_booking_status(booking, AmenityBooking.Status.CONFIRMED, request.user)
             return Response(AmenityBookingSerializer(updated).data)
         except DjangoValidationError as e:
             return Response({"detail": e.message}, status=status.HTTP_400_BAD_REQUEST)

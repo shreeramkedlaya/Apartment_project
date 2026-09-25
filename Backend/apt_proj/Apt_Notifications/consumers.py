@@ -46,6 +46,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.user_group_name,
                 self.channel_name
             )
+            await self.channel_layer.group_discard(
+                "broadcast",
+                self.channel_name
+            )
 
     async def receive(self, text_data=None, bytes_data=None):
         """
@@ -86,15 +90,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 
             self.user_group_name = f"user_{user_id}"
             
-            # Join room group
+            # Join personal room group
             await self.channel_layer.group_add(
                 self.user_group_name,
                 self.channel_name
             )
             
+            # Join global broadcast group for society-wide alerts
+            await self.channel_layer.group_add(
+                "broadcast",
+                self.channel_name
+            )
+            
             await self.send(text_data=json.dumps({
                 'type': 'auth_success',
-                'message': f'Subscribed to {self.user_group_name}'
+                'message': f'Subscribed to {self.user_group_name} and broadcast'
             }))
             
         except (TokenError, InvalidToken, ValueError) as e:

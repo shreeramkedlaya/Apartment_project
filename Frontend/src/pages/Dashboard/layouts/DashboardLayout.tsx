@@ -11,6 +11,7 @@ import { NAVIGATION } from '@/config/navigation';
 import Sidebar, { useDashboardNavigation } from './components/Sidebar';
 import Header from './components/Header';
 import VisitorInterceptModal from '../components/VisitorInterceptModal';
+import ActiveAlertBanner from './components/ActiveAlertBanner';
 
 // Lazy load page components
 const Dashboard = lazy(() => import('@/pages/Dashboard/Dashboard'));
@@ -27,7 +28,8 @@ const VisitorsPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/
 // Community
 const NoticesPage = lazy(() => import('@/pages/Dashboard/tabs/NoticeBoard/NoticeBoardPage'));
 const NoticeApprovalsPage = lazy(() => import('@/pages/Dashboard/tabs/NoticeBoard/NoticeApprovalsPage'));
-const AmenitiesPage = lazy(() => import('@/pages/Dashboard/tabs/Community/AmenitiesPage'));
+const AmenitiesPage = lazy(() => import('@/pages/Dashboard/tabs/ResidentServices/AmenitiesPage'));
+const AmenityApprovalsPage = lazy(() => import('@/pages/Dashboard/tabs/Management/AmenityApprovalsPage'));
 
 // Emergency
 const EmergencyPage = lazy(() => import('@/pages/Dashboard/tabs/Emergency/EmergencyPage'));
@@ -87,6 +89,7 @@ export default function DashboardLayout() {
         if (activeSubTab === 'notices') return <NoticesPage />;
         if (activeSubTab === 'notice-approvals') return <NoticeApprovalsPage />;
         if (activeSubTab === 'amenities') return <AmenitiesPage />;
+        if (activeSubTab === 'amenity-approvals') return <AmenityApprovalsPage />;
         return <PlaceholderPage title={`Community: ${activeSubTab}`} />;
       case 'emergency':
         return <EmergencyPage />;
@@ -139,6 +142,8 @@ export default function DashboardLayout() {
           isDarkMode={theme === 'dark'}
           toggleDarkMode={toggleTheme}
         />
+        
+        <ActiveAlertBanner />
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-8 relative">

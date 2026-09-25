@@ -15,4 +15,11 @@ This list tracks modules and scenarios that have been implemented but require th
 - [ ] **Auto-Approve Fallback**: Security adds a visitor. Resident ignores it. Verify Celery approves it after 30 seconds.
 - [ ] **Active Rejection**: Resident explicitly clicks "Reject Entry". Verify Security's dashboard instantly flips the status to Denied.
 
+## 3. Amenity Booking
+- [ ] **Resident Booking Submission**: Resident submits a booking slot for an amenity (e.g., Community Hall) with valid start/end times and purpose. Verify status is 'Pending Review'.
+- [ ] **Validation & Overlap**: Verify validation prevents submitting end times earlier than start times or selecting past dates.
+- [ ] **Manager Approval Flow**: Log in as Manager, navigate to Community -> Amenity Approvals, approve the booking. Verify status updates to Confirmed.
+- [ ] **Manager Rejection Flow**: Manager rejects a pending booking. Verify status updates to Rejected.
+- [ ] **Resident Cancellation**: Resident cancels their own pending or confirmed booking from the My Bookings table.
+
 *(Add new testing items here as we progress through milestones)*

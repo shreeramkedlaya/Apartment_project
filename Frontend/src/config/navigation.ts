@@ -50,6 +50,7 @@ export const NAVIGATION: TabConfig[] = [
       { id: "notices", label: "Notices", permissionId: "community.notices.view" },
       { id: "notice-approvals", label: "Notice Approvals", permissionId: "community.notices.approve" },
       { id: "amenities", label: "Amenities", permissionId: "community.amenities.view" },
+      { id: "amenity-approvals", label: "Amenity Approvals", permissionId: "community.amenities.approve" },
     ]
   },
   {

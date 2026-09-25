@@ -66,3 +66,4 @@ obsidian_vault/
 *.tmp
 .cache/
 /Backend/firebase-adminsdk.json
+logging.md

@@ -143,7 +143,10 @@
     "name": "Emergency",
     "children": [
       { "id": "emergency.view", "name": "View" },
-      { "id": "emergency.trigger", "name": "Trigger SOS" }
+      { "id": "emergency.trigger", "name": "Trigger SOS" },
+      { "id": "emergency.add_contact", "name": "Add Emergency Contact" },
+      { "id": "emergency.delete_contact", "name": "Delete Emergency Contact" },
+      { "id": "emergency.manage_broadcasts", "name": "Manage Broadcasts" }
     ]
   }
 ]

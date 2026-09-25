@@ -23,8 +23,8 @@ This document tracks the end-to-end execution roadmap across all modules of the 
 
 ### 🛡️ Milestone 3: Resident Services & Community Features
 - [x] **3.1 Visitor Management**: Security logs the visitor at the gate -> Resident gets a 30-second window to reject the entry -> Celery automatically approves them if no action is taken. No complex pre-approval passes needed, just the live 30-second approval window.
-- [~] **3.2 Amenity Booking**: Basic reservation system focused on the Community Hall (booking slots/hours). *[Backend Complete - Frontend Pending]*
-- [ ] **3.3 Emergency Directory & Broadcast**: (See suggestions below for finalizing scope).
+- [x] **3.2 Amenity Booking**: Full-stack reservation system for community amenities (facility listings, resident booking modals with slot validation, cancellation, and manager approval/rejection workflows).
+- [x] **3.3 Emergency Directory & Broadcast**: Fully implemented (Directory CRUD, Hybrid JSON schema, Trigger Broadcast Modals, and Dashboard-wide Active Alert Banner connected via WebSockets).
 
 ---
 
