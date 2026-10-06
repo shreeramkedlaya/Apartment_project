@@ -5,6 +5,8 @@ from ..Notices_models import Notice
 from apt_proj.Apt_Storage.serializers.media_serializer import MediaSerializer, enrich_media_with_signed_urls
 
 
+from .notice_acknowledgement_serializer import NoticeAcknowledgementSerializer
+
 class NoticeListSerializer(serializers.ListSerializer):
     def to_representation(self, data):
         notices = super().to_representation(data)
@@ -12,6 +14,8 @@ class NoticeListSerializer(serializers.ListSerializer):
 
 class NoticeSerializer(serializers.ModelSerializer):
     media = MediaSerializer(many=True, read_only=True)
+    acknowledgements = NoticeAcknowledgementSerializer(many=True, read_only=True)
+
     class Meta:
         model = Notice
         list_serializer_class = NoticeListSerializer
@@ -27,15 +31,45 @@ class NoticeSerializer(serializers.ModelSerializer):
     created_by = serializers.CharField(source='created_by.username', read_only=True)
     is_editable = serializers.SerializerMethodField()
     user_has_acknowledged = serializers.SerializerMethodField()
+    user_acknowledgement_status = serializers.SerializerMethodField()
+    is_author = serializers.SerializerMethodField()
+    can_acknowledge = serializers.SerializerMethodField()
 
     def get_is_editable(self, obj):
         return timezone.now() <= (obj.created_at + timedelta(minutes=15))
+
+    def get_is_author(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.created_by_id == request.user.id
+
+    def get_can_acknowledge(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        if not obj.requires_acknowledgement or obj.status != Notice.Status.PUBLISHED:
+            return False
+        if obj.created_by_id == request.user.id:
+            return False
+        from ..services.targeting_service import is_user_targeted
+        return is_user_targeted(request.user, obj.target_audience)
+
+    def get_user_acknowledgement_status(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        ack = obj.acknowledgements.filter(user=request.user).first()
+        return ack.status if ack else None
 
     def get_user_has_acknowledged(self, obj):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return False
-        return obj.acknowledgements.filter(user=request.user, status='Acknowledged').exists()
+        return obj.acknowledgements.filter(
+            user=request.user, 
+            status__in=['Acknowledged', 'Declined']
+        ).exists()
 
     def validate_title(self, value):
         if not value or not value.strip():
@@ -71,13 +105,13 @@ class NoticeSerializer(serializers.ModelSerializer):
         if valid_until and publish_date:
             if valid_until <= publish_date:
                 raise serializers.ValidationError({
-                    "valid_until": "valid_until must be strictly greater than publish_date."
+                    "valid_until": "The expiration date must be after the publish date."
                 })
         
         if acknowledge_by:
             if acknowledge_by <= timezone.now():
                 raise serializers.ValidationError({
-                    "acknowledge_by": "acknowledge_by must be strictly in the future."
+                    "acknowledge_by": "The acknowledgement deadline must be set in the future."
                 })
 
         return data

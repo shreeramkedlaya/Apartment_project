@@ -46,7 +46,12 @@ class Notice(TimeStampedModel):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_notice"'
+        db_table = '"apt_data"."notices"'
+        indexes =[
+            models.Index(fields=['status'], name='notice_status_idx'),
+            models.Index(fields=['publish_date'], name='notice_publish_date_idx'),
+            models.Index(fields=['status', 'publish_date'], name='notice_status_publish_idx')
+        ]
 
     def __str__(self):
         return self.title
@@ -67,7 +72,7 @@ class NoticeApproval(TimeStampedModel):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_noticeapproval"'
+        db_table = '"apt_data"."notice_approvals"'
 
     def __str__(self):
         return f"Approval for {self.notice.title} - {self.status}"
@@ -76,17 +81,17 @@ class NoticeAcknowledgement(TimeStampedModel):
     class Status(models.TextChoices):
         PENDING = 'Pending'
         ACKNOWLEDGED = 'Acknowledged'
+        DECLINED = 'Declined'
 
     notice = models.ForeignKey(Notice, on_delete=models.CASCADE, related_name='acknowledgements')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notice_acknowledgements')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     reminder_count = models.IntegerField(default=0)
     last_reminder_time = models.DateTimeField(null=True, blank=True)
-    acknowledgement_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_noticeacknowledgement"'
+        db_table = '"apt_data"."notice_acknowledgements"'
         unique_together = ('notice', 'user')
 
     def __str__(self):

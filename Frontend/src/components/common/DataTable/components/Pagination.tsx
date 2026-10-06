@@ -32,7 +32,7 @@ const Pagination: React.FC<PaginationProps> = ({
             setPageSize(Number(e.target.value));
             setPage(1);
           }}
-          className="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          className="border border-gray-200 dark:border-gray-700 rounded-lg pl-2 pr-8 py-1 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         >
           {pageSizeOptions.map((s) => (
             <option key={s} value={s}>

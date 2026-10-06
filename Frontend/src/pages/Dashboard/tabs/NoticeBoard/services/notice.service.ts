@@ -19,7 +19,7 @@ export interface NoticeAttachment {
 export interface NoticeAcknowledgement {
   id: string;
   user_id: string;
-  status: 'Pending' | 'Acknowledged';
+  status: 'Pending' | 'Acknowledged' | 'Declined';
 }
 
 export interface Notice {
@@ -40,12 +40,15 @@ export interface Notice {
   media?: NoticeMedia[];
   acknowledgements?: NoticeAcknowledgement[]; // Mostly for managers
   user_has_acknowledged?: boolean;
+  user_acknowledgement_status?: 'Pending' | 'Acknowledged' | 'Declined' | null;
+  is_author?: boolean;
+  can_acknowledge?: boolean;
 }
 
 class NoticeService {
-  /** Fetch all notices for managers */
-  async getNotices(): Promise<Notice[]> {
-    const response = await axiosInstance.get<Notice[]>('/notices/');
+  /** Fetch all notices for managers with backend filter/sort/search support */
+  async getNotices(params?: any): Promise<Notice[]> {
+    const response = await axiosInstance.get<Notice[]>('/notices/', { params });
     return response.data;
   }
 
@@ -98,9 +101,9 @@ class NoticeService {
     return response.data;
   }
 
-  /** Resident acknowledges a notice */
-  async acknowledgeNotice(id: string): Promise<void> {
-    await axiosInstance.post(`/notices/${id}/acknowledge/`);
+  /** Resident acknowledges or declines a notice */
+  async acknowledgeNotice(id: string, action: 'accept' | 'decline' = 'accept'): Promise<void> {
+    await axiosInstance.post(`/notices/${id}/acknowledge/`, { action });
   }
 }
 

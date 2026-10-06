@@ -11,7 +11,6 @@ interface UseDataTableProps {
   onSelectionChange?: (rows: any[]) => void;
   defaultView?: 'table' | 'grid';
   renderCard?: boolean;
-  serverSide?: boolean;
   totalItems?: number;
 }
 
@@ -25,7 +24,6 @@ export function useDataTable({
   onSelectionChange,
   defaultView = 'table',
   renderCard = false,
-  serverSide = false,
   totalItems = 0,
 }: UseDataTableProps) {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>(defaultView);
@@ -98,7 +96,6 @@ export function useDataTable({
 
   // ── Filter by active filter values (applied on top of search) ──
   const filtered = useMemo(() => {
-    if (serverSide) return data;
     let result = data;
     if (enableSearch && search.trim()) {
       const q = search.toLowerCase();
@@ -111,31 +108,38 @@ export function useDataTable({
     // Apply column filters
     Object.entries(activeFilters).forEach(([key, val]) => {
       if (!val) return;
-      result = result.filter(row => String(row[key] ?? '').toLowerCase() === val.toLowerCase());
+      result = result.filter(row => {
+        const rowVal = typeof row[key] === 'function' ? row[key](row) : row[key];
+        return String(rowVal ?? '').toLowerCase() === val.toLowerCase();
+      });
     });
     return result;
-  }, [data, search, enableSearch, activeFilters, serverSide]);
+  }, [data, search, enableSearch, activeFilters]);
 
   // ── Sort ──
   const sorted = useMemo(() => {
-    if (serverSide) return filtered;
     if (!sortConfig) return filtered;
     return [...filtered].sort((a, b) => {
-      const av = a[sortConfig.key], bv = b[sortConfig.key];
-      if (av < bv) return sortConfig.dir === 'asc' ? -1 : 1;
-      if (av > bv) return sortConfig.dir === 'asc' ? 1 : -1;
+      const aRaw = typeof a[sortConfig.key] === 'function' ? a[sortConfig.key](a) : a[sortConfig.key];
+      const bRaw = typeof b[sortConfig.key] === 'function' ? b[sortConfig.key](b) : b[sortConfig.key];
+      if (aRaw < bRaw) return sortConfig.dir === 'asc' ? -1 : 1;
+      if (aRaw > bRaw) return sortConfig.dir === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filtered, sortConfig, serverSide]);
+  }, [filtered, sortConfig]);
 
   // ── Paginate ──
   const safeSorted = sorted || [];
-  const totalPages = serverSide ? Math.max(1, Math.ceil(totalItems / pageSize)) : Math.max(1, Math.ceil(safeSorted.length / pageSize));
+  const isServerPaginated = totalItems > 0 && totalItems > data.length && data.length <= pageSize;
+  const totalPages = isServerPaginated
+    ? Math.max(1, Math.ceil(totalItems / pageSize))
+    : Math.max(1, Math.ceil(safeSorted.length / pageSize));
+
   const paginated = useMemo(() => {
-    if (serverSide) return safeSorted;
+    if (isServerPaginated) return safeSorted;
     const start = (page - 1) * pageSize;
     return safeSorted.slice(start, start + pageSize);
-  }, [safeSorted, page, pageSize, serverSide]);
+  }, [safeSorted, page, pageSize, isServerPaginated]);
 
   // ── Selection ──
   const safePaginated = paginated || [];

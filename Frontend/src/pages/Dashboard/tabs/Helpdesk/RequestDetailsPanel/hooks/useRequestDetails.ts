@@ -22,12 +22,12 @@ export const useRequestDetails = ({
   const [isCommenting, setIsCommenting] = useState(false);
 
   useEffect(() => {
-    if (request) {
-      setManagementData({
-        status: request.status,
-        resolution_notes: request.resolution_notes || '',
-      });
-    }
+    if (!request) return;
+
+    setManagementData({
+      status: request.status,
+      resolution_notes: request.resolution_notes || '',
+    });
   }, [request]);
 
   const handleAddComment = async () => {

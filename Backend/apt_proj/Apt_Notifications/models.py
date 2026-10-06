@@ -23,4 +23,8 @@ class DeviceToken(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = '"apt_data"."apt_proj_devicetoken"'
+        db_table = '"apt_data"."device_tokens"'
+        indexes = [
+            models.Index(fields=['user', 'notifications_enabled'], name='device_user_notif_idx'),
+            models.Index(fields=['updated_at'], name='device_updated_at_idx'),
+        ]

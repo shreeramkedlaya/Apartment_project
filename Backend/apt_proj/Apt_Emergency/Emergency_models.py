@@ -27,7 +27,7 @@ class EmergencyContact(TimeStampedModel):
    
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_emergencycontact"'
+        db_table = '"apt_data"."emergency_contacts"'
         ordering = ['name']
 
     def __str__(self):
@@ -60,7 +60,7 @@ class EmergencyBroadcast(TimeStampedModel):
     
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_emergencybroadcast"'
+        db_table = '"apt_data"."emergency_broadcasts"'
         ordering = ['-created_at']
         
     def __str__(self):

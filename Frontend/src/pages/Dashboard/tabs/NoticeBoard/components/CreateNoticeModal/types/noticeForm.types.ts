@@ -1,7 +1,7 @@
 import type { UploadedFile } from '@/components/widgets/MediaUpload';
-import type { Notice } from '../../../services/notice.service';
-import type { Role } from '@/types/roles.types';
 import type { BlockData } from '@/types/auth.types';
+import type { Role } from '@/types/roles.types';
+import type { Notice } from '../../../services/notice.service';
 
 export interface Step {
   id: number;
@@ -9,47 +9,41 @@ export interface Step {
 }
 
 export interface UseNoticeFormProps {
+  isOpen: boolean;
   editNotice?: Notice | null;
   onNoticeCreated: () => void;
   onNoticeUpdated: () => void;
   onClose: () => void;
 }
 
-export interface UseNoticeFormReturn {
+export interface NoticeFormData {
   title: string;
-  setTitle: (val: string) => void;
   content: string;
-  setContent: (val: string) => void;
   category: string;
-  setCategory: (val: string) => void;
   priority: 'Low' | 'Medium' | 'Critical';
-  setPriority: (val: 'Low' | 'Medium' | 'Critical') => void;
   publishMode: 'immediate' | 'scheduled';
-  setPublishMode: (val: 'immediate' | 'scheduled') => void;
   publishDate: string;
-  setPublishDate: (val: string) => void;
   validUntil: string;
-  setValidUntil: (val: string) => void;
   requiresAck: boolean;
-  setRequiresAck: (val: boolean) => void;
   acknowledgeBy: string;
-  setAcknowledgeBy: (val: string) => void;
   audienceType: 'everyone' | 'roles' | 'blocks';
-  setAudienceType: (val: 'everyone' | 'roles' | 'blocks') => void;
+  targetRoles: string[];
+  targetBlocks: string[];
+  targetFlats: string[];
+  selectedBlockForFlats: string;
+  selectedFlatInput: string;
+  files: UploadedFile[];
+}
+
+export interface UseNoticeFormReturn {
+  formData: NoticeFormData;
+  updateField: <K extends keyof NoticeFormData>(key: K, value: NoticeFormData[K]) => void;
+  setFormData: React.Dispatch<React.SetStateAction<NoticeFormData>>;
   availableRoles: Role[];
   availableBlocks: BlockData[];
-  targetRoles: string[];
-  setTargetRoles: React.Dispatch<React.SetStateAction<string[]>>;
-  targetBlocks: string[];
-  setTargetBlocks: React.Dispatch<React.SetStateAction<string[]>>;
-  targetFlats: string[];
-  setTargetFlats: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedBlockForFlats: string;
-  setSelectedBlockForFlats: (val: string) => void;
-  selectedFlatInput: string;
-  setSelectedFlatInput: (val: string) => void;
-  files: UploadedFile[];
-  setFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
   loading: boolean;
-  handleSubmit: (e?: React.FormEvent) => Promise<void>;
+  isDirty: boolean;
+  handleSubmit: (eOrStatus?: React.FormEvent | 'Draft' | 'Scheduled' | 'Published') => Promise<void>;
+  saveDraftOnClose: () => Promise<void>;
+  resetForm: () => void;
 }

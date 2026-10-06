@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode, useEffect, useRef } from 'react';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -16,14 +16,21 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timerids = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
-  const showToast = (message: string, type: ToastType = 'info') => {
+  useEffect(() => {
+    return () => { timerids.current.forEach(clearTimeout); };
+  }, [])
+
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
+    const timerid = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
+      timerids.current.delete(timerid);
     }, 3000);
-  };
+    timerids.current.add(timerid);
+  }, []);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -33,8 +40,8 @@ const ToastProvider = ({ children }: { children: ReactNode }) => {
           <div
             key={toast.id}
             className={`px-4 py-3 rounded-lg shadow-xl text-sm font-medium animate-in slide-in-from-bottom-5 fade-in duration-300 ${toast.type === 'success' ? 'bg-green-600 text-white' :
-                toast.type === 'error' ? 'bg-red-600 text-white' :
-                  'bg-gray-800 text-white'
+              toast.type === 'error' ? 'bg-red-600 text-white' :
+                'bg-gray-800 text-white'
               }`}
           >
             {toast.message}

@@ -10,20 +10,25 @@ export interface SlideData {
 
 interface CarouselBannerProps {
   slides: SlideData[];
+  interval?: number;
 }
 
-export default function CarouselBanner({ slides }: CarouselBannerProps) {
+const CarouselBanner: React.FC<CarouselBannerProps> = ({ slides, interval = 4000 }) => {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // 5 second visual rotation
   useEffect(() => {
     if (slides.length <= 1) return;
+
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
-    }, 5000);
+      // Only advance if tab is visible
+      if (document.visibilityState === 'visible') {
+        setCurrentIndex((prev) => (prev + 1) % slides.length);
+      }
+    }, interval);
+
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides.length, interval]);
 
   if (slides.length === 0) return null;
 
@@ -31,7 +36,7 @@ export default function CarouselBanner({ slides }: CarouselBannerProps) {
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#3b82f6] via-[#14b8a6] to-[#10b981] p-6 shadow-sm shadow-[#14b8a6]/20 transition-all duration-500 min-h-[140px] flex items-center">
-      
+
       {/* Abstract background elements */}
       <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
       <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-white/10 rounded-full blur-xl" />
@@ -67,13 +72,15 @@ export default function CarouselBanner({ slides }: CarouselBannerProps) {
       {slides.length > 1 && (
         <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
           {slides.map((_, idx) => (
-            <div 
-              key={idx} 
-              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} 
+            <div
+              key={idx}
+              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`}
             />
           ))}
         </div>
       )}
     </div>
   );
-}
+};
+
+export default CarouselBanner;

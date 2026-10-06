@@ -1,10 +1,10 @@
 def is_user_targeted(user, target_audience):
     """
     Evaluates if the user matches the target_audience JSON rule.
-    Returns False if target_audience is empty or invalid.
+    Returns True if target_audience is empty (Broadcast to everyone).
     """
-    if not target_audience or not isinstance(target_audience, list):
-        return False
+    if not target_audience or not isinstance(target_audience, list) or len(target_audience) == 0:
+        return True
     
     # Extract live attributes
     try:
@@ -61,13 +61,26 @@ def get_targeted_notices_for_user(user, notices_queryset):
 def resolve_target_users(notice):
     """
     Returns a list of User IDs that match the notice targeting rule.
+    Uses DB-level filtering for pure-role targets; falls back to Python
+    loop for mixed (block/flat) targeting rules.
     """
     from django.contrib.auth.models import User
-    active_users = User.objects.filter(is_active=True).select_related('profile', 'profile__role', 'profile__flat', 'profile__flat__block')
-    
-    targeted_ids = []
-    for user in active_users:
-        if is_user_targeted(user, notice.target_audience):
-            targeted_ids.append(user.id)
-            
-    return targeted_ids
+    target_audience = notice.target_audience or []
+
+    if not target_audience or not isinstance(target_audience, list) or len(target_audience) == 0:
+        return list(User.objects.filter(is_active=True).values_list('id', flat=True))
+
+    # Fast path: all groups target only a role (most common case)
+    if all(set(g.keys()) == {'role'} for g in target_audience if isinstance(g,dict)):
+        role_names = [g['role'] for g in target_audience if isinstance(g,dict)]
+        return list(
+            User.objects.filter(
+                is_active=True,
+                profile__role__name__in=role_names,
+            ).values_list('id', flat=True)
+        )
+    # Slow path: mixed targeting (block/flat combos) — Python loop
+    active_users = User.objects.filter(is_active=True).select_related(
+        'profile', 'profile__role', 'profile__flat', 'profile__flat__block'
+    )
+    return [u.id for u in active_users if is_user_targeted(u, target_audience)]

@@ -9,7 +9,7 @@ User = get_user_model()
 class IssueCategory(TimeStampedModel):
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_issuecategory"'
+        db_table = '"apt_data"."issue_categories"'
         ordering = ['name']
         
     name = models.CharField(max_length=100, unique=True)
@@ -62,7 +62,13 @@ class Issue(TimeStampedModel):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_issue"'
+        db_table = '"apt_data"."issues"'
+        indexes = [
+            models.Index(fields=['status'], name='issue_status_idx'),
+            models.Index(fields=['created_at'], name='issue_created_at_idx'),
+            models.Index(fields=['status', 'created_at'], name='issue_status_created_idx'),
+        ]
+
 
     def __str__(self):
         return f"Issue #{self.id}: {self.title}"
@@ -70,7 +76,7 @@ class Issue(TimeStampedModel):
 class IssueTimeline(TimeStampedModel):
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_issuetimeline"'
+        db_table = '"apt_data"."issue_timelines"'
         ordering = ['created_at']
         
     issue = models.OneToOneField(Issue, on_delete=models.CASCADE, related_name='timeline_record')

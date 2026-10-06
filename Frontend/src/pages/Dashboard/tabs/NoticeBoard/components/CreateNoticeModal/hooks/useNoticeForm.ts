@@ -1,77 +1,138 @@
-import { useState, useEffect, useCallback } from 'react';
+import type { UploadedFile } from '@/components/widgets/MediaUpload';
 import { useToast } from '@/context/ToastContext';
 import { fetchBlocks } from '@/services/auth/auth.service';
+import type { BlockData } from '@/types/auth.types';
+import type { Role } from '@/types/roles.types';
+import { useCallback, useEffect, useState } from 'react';
 import { fetchRoles } from '../../../../Administration/services/roles.service';
 import { noticeService } from '../../../services/notice.service';
-import type { Role } from '@/types/roles.types';
-import type { BlockData } from '@/types/auth.types';
-import type { UploadedFile } from '@/components/widgets/MediaUpload';
-import type { UseNoticeFormProps } from '../types/noticeForm.types';
+import type { NoticeFormData, UseNoticeFormProps, UseNoticeFormReturn } from '../types/noticeForm.types';
 
-export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, onClose }: UseNoticeFormProps) => {
+const getDefaultValidUntil = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  d.setHours(23, 59, 59, 0);
+  const offset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offset).toISOString().slice(0, -1);
+};
+
+export const INITIAL_NOTICE_FORM_DATA: NoticeFormData = {
+  title: '',
+  content: '',
+  category: 'General',
+  priority: 'Low',
+  publishMode: 'immediate',
+  publishDate: '',
+  validUntil: getDefaultValidUntil(),
+  requiresAck: false,
+  acknowledgeBy: '',
+  audienceType: 'everyone',
+  targetRoles: [],
+  targetBlocks: [],
+  targetFlats: [],
+  selectedBlockForFlats: '',
+  selectedFlatInput: '',
+  files: [],
+};
+
+export const buildNoticePayload = (
+  formData: NoticeFormData,
+  statusOverride?: 'Draft' | 'Scheduled' | 'Published'
+) => {
+  let targetAudience: Array<{ role?: string; block?: string; flat?: string }> = [];
+  if (formData.audienceType === 'roles') {
+    targetAudience = formData.targetRoles.map((r: string) => ({ role: r }));
+  } else if (formData.audienceType === 'blocks') {
+    targetAudience = [
+      ...formData.targetBlocks.map((b: string) => ({ block: b })),
+      ...formData.targetFlats.map((f: string) => ({ flat: f })),
+    ];
+  }
+
+  const finalPublishDate = formData.publishMode === 'scheduled' && formData.publishDate
+    ? new Date(formData.publishDate).toISOString()
+    : undefined;
+
+  const finalValidUntil = formData.validUntil
+    ? new Date(formData.validUntil).toISOString()
+    : undefined;
+
+  const finalAckBy = formData.requiresAck && formData.acknowledgeBy
+    ? new Date(formData.acknowledgeBy).toISOString()
+    : undefined;
+
+  const determinedStatus = statusOverride
+    ? statusOverride
+    : formData.publishMode === 'scheduled'
+      ? 'Scheduled'
+      : 'Published';
+
+  const media_tokens = formData.files
+    .filter((f: UploadedFile) => f.mediaId && f.proofToken)
+    .map((f: UploadedFile) => ({
+      media_id: f.mediaId!,
+      proof_token: f.proofToken!,
+    }));
+
+  const payload: any = {
+    title: formData.title,
+    content: formData.content,
+    category: formData.category,
+    priority: formData.priority,
+    requires_acknowledgement: formData.requiresAck,
+    status: determinedStatus,
+    target_audience: targetAudience,
+  };
+
+  if (media_tokens.length > 0) payload.media_tokens = media_tokens;
+  if (finalPublishDate) payload.publish_date = finalPublishDate;
+  if (finalValidUntil) payload.valid_until = finalValidUntil;
+  if (finalAckBy) payload.acknowledge_by = finalAckBy;
+
+  return payload;
+};
+
+export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, onClose }: UseNoticeFormProps): UseNoticeFormReturn => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<NoticeFormData>(INITIAL_NOTICE_FORM_DATA);
 
-  // Form State
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState('General');
-  const [priority, setPriority] = useState<'Low' | 'Medium' | 'Critical'>('Low');
-
-  // Scheduling State
-  const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled'>('immediate');
-  const [publishDate, setPublishDate] = useState('');
-  const [validUntil, setValidUntil] = useState('');
-
-  // Acknowledgement State
-  const [requiresAck, setRequiresAck] = useState(false);
-  const [acknowledgeBy, setAcknowledgeBy] = useState('');
-
-  // Target Audience State
+  // Available metadata
   const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
   const [availableBlocks, setAvailableBlocks] = useState<BlockData[]>([]);
-  const [targetRoles, setTargetRoles] = useState<string[]>([]);
-  const [targetBlocks, setTargetBlocks] = useState<string[]>([]);
-  const [targetFlats, setTargetFlats] = useState<string[]>([]);
 
-  // Dependent Dropdown state for flats
-  const [selectedBlockForFlats, setSelectedBlockForFlats] = useState<string>('');
-  const [selectedFlatInput, setSelectedFlatInput] = useState<string>('');
-
-  // Media
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-
-  // Audience Type State
-  const [audienceType, setAudienceType] = useState<'everyone' | 'roles' | 'blocks'>('everyone');
+  const updateField = useCallback(<K extends keyof NoticeFormData>(key: K, value: NoticeFormData[K]) => {
+    setFormData((prev: NoticeFormData) => ({ ...prev, [key]: value }));
+  }, []);
 
   useEffect(() => {
-    fetchRoles().then((data: any) => {
-      const rolesArray = Array.isArray(data) ? data : (data.results || data.roles || []);
-      setAvailableRoles(rolesArray);
-    }).catch(console.error);
-    fetchBlocks().then(setAvailableBlocks).catch(console.error);
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    fetchRoles()
+      .then((data: any) => {
+        if (signal.aborted) return;
+        const rolesArray = Array.isArray(data) ? data : (data.results || data.roles || []);
+        setAvailableRoles(rolesArray);
+      })
+      .catch((err) => {
+        if (!signal.aborted) console.error(err);
+      });
+
+    fetchBlocks()
+      .then((data) => {
+        if (signal.aborted) return;
+        setAvailableBlocks(data);
+      })
+      .catch((err) => {
+        if (!signal.aborted) console.error(err);
+      });
+
+    return () => controller.abort();
   }, []);
 
   const resetForm = useCallback(() => {
     if (editNotice) {
-      setTitle(editNotice.title);
-      setContent(editNotice.content);
-      setCategory(editNotice.category);
-      setPriority(editNotice.priority);
-      setRequiresAck(editNotice.requires_acknowledgement);
-
-      if (editNotice.publish_date || editNotice.valid_until) {
-        setPublishMode('scheduled');
-        setPublishDate(editNotice.publish_date ? new Date(editNotice.publish_date).toISOString() : '');
-        setValidUntil(editNotice.valid_until ? new Date(editNotice.valid_until).toISOString() : '');
-      } else {
-        setPublishMode('immediate');
-        setPublishDate('');
-        setValidUntil('');
-      }
-
-      setAcknowledgeBy(editNotice.acknowledge_by ? new Date(editNotice.acknowledge_by).toISOString() : '');
-
       const audience = editNotice.target_audience || [];
       const editRoles: string[] = [];
       const editBlocks: string[] = [];
@@ -85,33 +146,36 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
         });
       }
 
-      setTargetRoles(editRoles);
-      setTargetBlocks(editBlocks);
-      setTargetFlats(editFlats);
-
+      let audienceType: 'everyone' | 'roles' | 'blocks' = 'everyone';
       if (editRoles.length > 0) {
-        setAudienceType('roles');
+        audienceType = 'roles';
       } else if (editBlocks.length > 0 || editFlats.length > 0) {
-        setAudienceType('blocks');
-      } else {
-        setAudienceType('everyone');
+        audienceType = 'blocks';
       }
 
+      setFormData({
+        title: editNotice.title || '',
+        content: editNotice.content || '',
+        category: editNotice.category || 'General',
+        priority: editNotice.priority || 'Low',
+        publishMode: editNotice.publish_date ? 'scheduled' : 'immediate',
+        publishDate: editNotice.publish_date ? new Date(editNotice.publish_date).toISOString() : '',
+        validUntil: editNotice.valid_until ? new Date(editNotice.valid_until).toISOString() : getDefaultValidUntil(),
+        requiresAck: editNotice.requires_acknowledgement || false,
+        acknowledgeBy: editNotice.acknowledge_by ? new Date(editNotice.acknowledge_by).toISOString() : '',
+        audienceType,
+        targetRoles: editRoles,
+        targetBlocks: editBlocks,
+        targetFlats: editFlats,
+        selectedBlockForFlats: '',
+        selectedFlatInput: '',
+        files: [],
+      });
     } else {
-      setTitle('');
-      setContent('');
-      setCategory('General');
-      setPriority('Low');
-      setPublishMode('immediate');
-      setPublishDate('');
-      setValidUntil('');
-      setRequiresAck(false);
-      setAcknowledgeBy('');
-      setAudienceType('everyone');
-      setTargetRoles([]);
-      setTargetBlocks([]);
-      setTargetFlats([]);
-      setFiles([]);
+      setFormData({
+        ...INITIAL_NOTICE_FORM_DATA,
+        validUntil: getDefaultValidUntil(),
+      });
     }
   }, [editNotice]);
 
@@ -126,11 +190,11 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
     } else if (eOrStatus && 'preventDefault' in eOrStatus) {
       eOrStatus.preventDefault();
     }
-    if (!title.trim()) {
+    if (!formData.title.trim()) {
       showToast('Title is required', 'error');
       return;
     }
-    if (!content.trim()) {
+    if (!formData.content.trim()) {
       showToast('Notice content is required', 'error');
       return;
     }
@@ -138,72 +202,18 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
     setLoading(true);
 
     try {
-      let targetAudience: any[] = [];
-      if (audienceType === 'roles') {
-        targetAudience = targetRoles.map(r => ({ role: r }));
-      } else if (audienceType === 'blocks') {
-        targetAudience = [
-          ...targetBlocks.map(b => ({ block: b })),
-          ...targetFlats.map(f => ({ flat: f }))
-        ];
-      }
-
-      const finalPublishDate = publishMode === 'scheduled' && publishDate ? new Date(publishDate).toISOString() : undefined;
-      const finalValidUntil = publishMode === 'scheduled' && validUntil ? new Date(validUntil).toISOString() : undefined;
-      const finalAckBy = requiresAck && acknowledgeBy ? new Date(acknowledgeBy).toISOString() : undefined;
+      const payload = buildNoticePayload(formData, statusOverride);
 
       if (editNotice) {
-        await noticeService.updateNotice(editNotice.id, {
-          title,
-          content,
-          category,
-          priority,
-          requires_acknowledgement: requiresAck,
-          target_audience: targetAudience,
-          publish_date: finalPublishDate,
-          valid_until: finalValidUntil,
-          acknowledge_by: finalAckBy,
-        });
+        await noticeService.updateNotice(editNotice.id, payload);
         showToast('Notice updated successfully', 'success');
         onNoticeUpdated();
       } else {
-        // Determine status
-        const determinedStatus = statusOverride
-          ? statusOverride
-          : publishMode === 'scheduled'
-            ? 'Scheduled'
-            : 'Published';
-
-        const media_tokens = files
-          .filter(f => f.mediaId && f.proofToken)
-          .map(f => ({
-            media_id: f.mediaId,
-            proof_token: f.proofToken,
-          }));
-
-        const payload: any = {
-          title,
-          content,
-          category,
-          priority,
-          requires_acknowledgement: requiresAck,
-          status: determinedStatus,
-          target_audience: targetAudience,
-        };
-
-        if (media_tokens.length > 0) {
-          payload.media_tokens = media_tokens;
-        }
-
-        if (finalPublishDate) payload.publish_date = finalPublishDate;
-        if (finalValidUntil) payload.valid_until = finalValidUntil;
-        if (finalAckBy) payload.acknowledge_by = finalAckBy;
-
         await noticeService.createNotice(payload);
-        
-        if (determinedStatus === 'Draft') {
+
+        if (payload.status === 'Draft') {
           showToast('Notice saved as draft', 'info');
-        } else if (determinedStatus === 'Scheduled') {
+        } else if (payload.status === 'Scheduled') {
           showToast('Notice scheduled successfully', 'success');
         } else {
           showToast('Notice published successfully', 'success');
@@ -212,41 +222,51 @@ export const useNoticeForm = ({ editNotice, onNoticeCreated, onNoticeUpdated, on
       }
       onClose();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to save notice', 'error');
+      let errorMsg = 'Failed to save notice';
+      const responseData = error.response?.data;
+
+      if (responseData) {
+        if (typeof responseData.error === 'string') {
+          errorMsg = responseData.error;
+        } else if (typeof responseData.error === 'object' && responseData.error !== null) {
+          const firstKey = Object.keys(responseData.error)[0];
+          if (firstKey) {
+            const firstErr = responseData.error[firstKey];
+            errorMsg = `${firstKey}: ${Array.isArray(firstErr) ? firstErr[0] : firstErr}`;
+          }
+        } else if (typeof responseData.detail === 'string') {
+          errorMsg = responseData.detail;
+        } else if (typeof responseData === 'object') {
+          const firstKey = Object.keys(responseData)[0];
+          if (firstKey && firstKey !== 'status') {
+            const firstErr = responseData[firstKey];
+            errorMsg = `${firstKey}: ${Array.isArray(firstErr) ? firstErr[0] : firstErr}`;
+          }
+        }
+      }
+
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const saveDraftOnClose = async () => {
-    if (!title.trim() && !content.trim()) {
+    if (!formData.title.trim() && !formData.content.trim()) {
       onClose();
       return;
     }
     await handleSubmit('Draft');
   };
 
-  const isDirty = title.trim().length > 0 || content.trim().length > 0;
+  const isDirty = formData.title.trim().length > 0 || formData.content.trim().length > 0;
 
   return {
-    title, setTitle,
-    content, setContent,
-    category, setCategory,
-    priority, setPriority,
-    publishMode, setPublishMode,
-    publishDate, setPublishDate,
-    validUntil, setValidUntil,
-    requiresAck, setRequiresAck,
-    acknowledgeBy, setAcknowledgeBy,
-    audienceType, setAudienceType,
+    formData,
+    updateField,
+    setFormData,
     availableRoles,
     availableBlocks,
-    targetRoles, setTargetRoles,
-    targetBlocks, setTargetBlocks,
-    targetFlats, setTargetFlats,
-    selectedBlockForFlats, setSelectedBlockForFlats,
-    selectedFlatInput, setSelectedFlatInput,
-    files, setFiles,
     loading,
     isDirty,
     handleSubmit,

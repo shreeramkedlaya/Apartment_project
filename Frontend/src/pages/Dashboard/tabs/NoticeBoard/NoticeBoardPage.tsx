@@ -79,7 +79,7 @@ const NoticeBoardPage: React.FC = () => {
     const published = data.filter(n => n.status === 'Published').length;
     const draft = data.filter(n => n.status === 'Draft').length;
     const scheduled = data.filter(n => n.status === 'Scheduled').length;
-    
+
     return [
       { label: 'Total Notices', value: total, icon: Bell, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
       { label: 'Published', value: published, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
@@ -129,11 +129,15 @@ const NoticeBoardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
     const handleNoticeUpdate = () => {
-      tableRef.current?.refresh();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => { tableRef.current?.refresh(); }, 250);
     };
     window.addEventListener('NOTICES_UPDATED', handleNoticeUpdate);
     return () => {
+      clearTimeout(debounceTimer);
       window.removeEventListener('NOTICES_UPDATED', handleNoticeUpdate);
     };
   }, []);
@@ -143,8 +147,8 @@ const NoticeBoardPage: React.FC = () => {
       <div className="w-full">
         <DataTable
           ref={tableRef}
-          api={async () => {
-            const res = await noticeService.getNotices();
+          api={async (params) => {
+            const res = await noticeService.getNotices(params);
             return { results: res, count: res.length };
           }}
           columns={columns}
@@ -162,11 +166,10 @@ const NoticeBoardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleActionClick(row)}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  isDelete
-                    ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                }`}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isDelete
+                  ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  }`}
               >
                 {isDelete ? <Trash2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                 {isDelete ? 'Delete' : 'Cancel Notice'}
@@ -202,17 +205,19 @@ const NoticeBoardPage: React.FC = () => {
         canManageNotices={canManageNotices}
       />
 
-      {/* Create / Edit Modal */}
-      <CreateNoticeModal
-        isOpen={isModalOpen || !!noticeToEdit}
-        onClose={() => {
-          setIsModalOpen(false);
-          setNoticeToEdit(null);
-        }}
-        editNotice={noticeToEdit}
-        onNoticeCreated={() => tableRef.current?.refresh()}
-        onNoticeUpdated={() => tableRef.current?.refresh()}
-      />
+      {/* Create / Edit Modal (Lazy mounted on open) */}
+      {(isModalOpen || !!noticeToEdit) && (
+        <CreateNoticeModal
+          isOpen={isModalOpen || !!noticeToEdit}
+          onClose={() => {
+            setIsModalOpen(false);
+            setNoticeToEdit(null);
+          }}
+          editNotice={noticeToEdit}
+          onNoticeCreated={() => tableRef.current?.refresh()}
+          onNoticeUpdated={() => tableRef.current?.refresh()}
+        />
+      )}
 
       {/* Context-aware Delete / Cancel Notice Confirmation Modal */}
       <ConfirmModal

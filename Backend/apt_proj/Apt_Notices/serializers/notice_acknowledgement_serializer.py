@@ -5,4 +5,4 @@ class NoticeAcknowledgementSerializer(serializers.ModelSerializer):
     class Meta:
         model = NoticeAcknowledgement
         fields = '__all__'
-        read_only_fields = ['notice', 'user', 'reminder_count', 'last_reminder_time', 'acknowledgement_time']
+        read_only_fields = ['notice', 'user', 'reminder_count', 'last_reminder_time']

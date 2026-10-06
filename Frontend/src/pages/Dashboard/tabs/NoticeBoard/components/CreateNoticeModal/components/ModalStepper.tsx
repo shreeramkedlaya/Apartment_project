@@ -7,49 +7,50 @@ interface ModalStepperProps {
   currentStep: number;
 }
 
-export const ModalStepper: React.FC<ModalStepperProps> = ({ steps, currentStep }) => {
+const ModalStepper: React.FC<ModalStepperProps> = ({ steps, currentStep }) => {
   return (
-    <div className="flex items-start w-full max-w-[280px] mx-auto">
+    <div className="flex items-center justify-center w-full max-w-md mx-auto gap-1.5 sm:gap-2 py-0.5 select-none">
       {steps.map((s, i) => {
         const isActive = currentStep === s.id;
         const isCompleted = currentStep > s.id;
 
         return (
           <React.Fragment key={s.id}>
-            <div className="flex flex-col items-center gap-2 w-16">
-              {/* Step number */}
+            {/* Step Chip */}
+            <div
+              className={`
+                flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 transition-all duration-200 border
+                ${isActive
+                  ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 shadow-xs'
+                  : isCompleted
+                    ? 'bg-gray-100/80 dark:bg-gray-800/60 border-gray-200/60 dark:border-gray-700/60 text-gray-700 dark:text-gray-300'
+                    : 'bg-transparent border-transparent text-gray-400 dark:text-gray-500'
+                }
+              `}
+            >
+              {/* Step indicator circle */}
               <div
                 className={`
-                  w-5 h-5 rounded-full
+                  w-4 h-4 rounded-full
                   flex items-center justify-center
-                  text-[10px] font-semibold
+                  text-[10px] font-bold shrink-0
                   transition-all duration-200
                   ${isActive
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
+                    ? 'bg-blue-600 text-white'
                     : isCompleted
-                      ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                      : 'bg-gray-100 text-gray-400 border border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700'
+                      ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                      : 'bg-gray-200/80 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
                   }
                 `}
               >
                 {isCompleted ? (
-                  <Check className="w-3 h-3" />
+                  <Check className="w-2.5 h-2.5 stroke-[3]" />
                 ) : (
                   s.id
                 )}
               </div>
-              <span
-                className={`
-                  text-[11px] font-semibold whitespace-nowrap
-                  transition-colors duration-200
-                  ${isActive
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : isCompleted
-                      ? 'text-gray-700 dark:text-gray-200'
-                      : 'text-gray-400 dark:text-gray-500'
-                  }
-                `}
-              >
+
+              <span className="whitespace-nowrap text-[11px] sm:text-xs">
                 {s.title}
               </span>
             </div>
@@ -57,11 +58,11 @@ export const ModalStepper: React.FC<ModalStepperProps> = ({ steps, currentStep }
             {i < steps.length - 1 && (
               <div
                 className={`
-                  flex-1 h-px mt-2.5 mx-2 rounded-full
+                  w-4 sm:w-8 h-px rounded-full
                   transition-colors duration-300
                   ${isCompleted
-                    ? 'bg-gray-300 dark:bg-gray-600'
-                    : 'bg-gray-100 dark:bg-gray-800'
+                    ? 'bg-blue-500/50 dark:bg-blue-400/50'
+                    : 'bg-gray-200 dark:bg-gray-800'
                   }
                 `}
               />
@@ -72,3 +73,5 @@ export const ModalStepper: React.FC<ModalStepperProps> = ({ steps, currentStep }
     </div>
   );
 };
+
+export default ModalStepper;

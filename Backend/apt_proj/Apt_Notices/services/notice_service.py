@@ -4,26 +4,59 @@ from django.core.exceptions import ValidationError
 from ..Notices_models import Notice, NoticeApproval, NoticeAcknowledgement
 from apt_proj.Apt_Storage.services.storage_service import StorageService
 
+def populate_pending_acknowledgements(notice):
+    """
+    Pre-populates Pending NoticeAcknowledgement records for all targeted users.
+    """
+    if not notice.requires_acknowledgement or notice.status != Notice.Status.PUBLISHED:
+        return
+    
+    from .targeting_service import resolve_target_users
+    user_ids = resolve_target_users(notice)
+    if not user_ids:
+        return
+        
+    existing_user_ids = set(
+        notice.acknowledgements.values_list('user_id', flat=True)
+    )
+    
+    new_acks = [
+        NoticeAcknowledgement(
+            notice=notice,
+            user_id=uid,
+            status=NoticeAcknowledgement.Status.PENDING
+        )
+        for uid in user_ids
+        if uid != notice.created_by_id and uid not in existing_user_ids
+    ]
+    
+    if new_acks:
+        NoticeAcknowledgement.objects.bulk_create(new_acks, ignore_conflicts=True)
+
 def _trigger_publish_events(notice):
     """
     Helper to trigger FCM delivery task.
     """
+    populate_pending_acknowledgements(notice)
     from .targeting_service import resolve_target_users
     try:
         from apt_proj.Apt_Notifications.tasks import send_notification_task
         user_ids = resolve_target_users(notice)
+        if notice.created_by_id:
+            user_ids = [uid for uid in user_ids if uid != notice.created_by_id]
         
-        send_notification_task.delay(
-            title=notice.title,
-            body=notice.content[:100],  # excerpt
-            data={
-                "notice_id": str(notice.id), 
-                "type": "NOTICE",
-                "priority": notice.priority
-            },
-            user_ids=user_ids,
-            all_users=False
-        )
+        if user_ids:
+            send_notification_task.delay(
+                title=notice.title,
+                body=notice.content[:100],  # excerpt
+                data={
+                    "notice_id": str(notice.id), 
+                    "type": "NOTICE",
+                    "priority": notice.priority
+                },
+                user_ids=user_ids,
+                all_users=False
+            )
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning(f"Failed to trigger FCM: {e}")
@@ -49,7 +82,9 @@ def create_notice(data, user, media_tokens=None):
     else:
         if desired_status == Notice.Status.DRAFT:
             data['status'] = Notice.Status.DRAFT
-        elif publish_date and publish_date > timezone.now():
+        elif desired_status == Notice.Status.SCHEDULED or (publish_date and publish_date > timezone.now()):
+            if not publish_date or publish_date <= timezone.now():
+                raise ValidationError("Scheduled notices must have a publish date in the future.")
             data['status'] = Notice.Status.SCHEDULED
         else:
             data['status'] = Notice.Status.PUBLISHED
@@ -75,6 +110,7 @@ def create_notice(data, user, media_tokens=None):
             )
     
     if notice.status == Notice.Status.PUBLISHED:
+        populate_pending_acknowledgements(notice)
         from django.db import transaction
         transaction.on_commit(lambda n=notice: _trigger_publish_events(n))
 
@@ -94,6 +130,8 @@ def update_notice(notice, data, user):
         setattr(notice, key, value)
     
     notice.save()
+    if notice.status == Notice.Status.PUBLISHED and notice.requires_acknowledgement:
+        populate_pending_acknowledgements(notice)
     return notice
 
 def publish_notice(notice, user):
@@ -112,6 +150,7 @@ def publish_notice(notice, user):
         if not notice.publish_date:
             notice.publish_date = timezone.now()
         
+        populate_pending_acknowledgements(notice)
         # Trigger FCM notification delivery flow
         from django.db import transaction
         transaction.on_commit(lambda n=notice: _trigger_publish_events(n))
@@ -162,6 +201,7 @@ def approve_notice(notice, user):
         notice.status = Notice.Status.PUBLISHED
         if not notice.publish_date:
             notice.publish_date = timezone.now()
+        populate_pending_acknowledgements(notice)
         transaction.on_commit(lambda n=notice: _trigger_publish_events(n))
 
     notice.save()
@@ -186,12 +226,22 @@ def reject_notice(notice, user, reason):
 
     return notice
 
-def acknowledge_notice(notice, user):
+def acknowledge_notice(notice, user, action='accept'):
     """
-    Marks the given notice as acknowledged by the user.
+    Marks the given notice as acknowledged/accepted or declined by the user.
     """
     if not notice.requires_acknowledgement:
         raise ValidationError("This notice does not require acknowledgement.")
+
+    if notice.status != Notice.Status.PUBLISHED:
+        raise ValidationError("Only published notices can be acknowledged.")
+
+    if user and notice.created_by_id == user.id:
+        raise ValidationError("Authors cannot self-acknowledge their own notice.")
+
+    from .targeting_service import is_user_targeted
+    if user and not is_user_targeted(user, notice.target_audience):
+        raise ValidationError("You are not in the target audience for this notice.")
 
     ack, created = NoticeAcknowledgement.objects.get_or_create(
         notice=notice, 
@@ -199,10 +249,13 @@ def acknowledge_notice(notice, user):
         defaults={'status': NoticeAcknowledgement.Status.PENDING}
     )
 
-    if ack.status == NoticeAcknowledgement.Status.ACKNOWLEDGED:
-        raise ValidationError("Notice already acknowledged.")
+    if ack.status in [NoticeAcknowledgement.Status.ACKNOWLEDGED, NoticeAcknowledgement.Status.DECLINED]:
+        raise ValidationError("You have already responded to this notice.")
 
-    ack.status = NoticeAcknowledgement.Status.ACKNOWLEDGED
-    ack.acknowledgement_time = timezone.now()
+    if str(action).lower() in ['decline', 'declined']:
+        ack.status = NoticeAcknowledgement.Status.DECLINED
+    else:
+        ack.status = NoticeAcknowledgement.Status.ACKNOWLEDGED
+
     ack.save()
     return ack

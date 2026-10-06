@@ -13,6 +13,7 @@ export interface ModalProps {
   width?: 'small' | 'large' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
   /** Backwards compatibility alias for width */
   maxWidth?: 'small' | 'large' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
+  compact?: boolean;
 }
 
 export default function Modal({
@@ -24,7 +25,8 @@ export default function Modal({
   children,
   footer,
   width,
-  maxWidth
+  maxWidth,
+  compact = false
 }: ModalProps) {
   // Prevent body scrolling when modal is open
   useEffect(() => {
@@ -71,15 +73,15 @@ export default function Modal({
       {/* Modal Panel */}
       <div className={`relative w-full ${widthClass} max-h-[90vh] bg-white dark:bg-gray-900 shadow-2xl flex flex-col rounded-2xl animate-in zoom-in-95 duration-200`}>
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-start gap-4">
+        <div className={`flex-shrink-0 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 ${compact ? 'px-5 py-3.5' : 'px-6 py-5'}`}>
+          <div className="flex items-start gap-3">
             {icon && (
-              <div className="flex-shrink-0 p-2 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30">
+              <div className={`flex-shrink-0 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30 ${compact ? 'p-1.5' : 'p-2'}`}>
                 {icon}
               </div>
             )}
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+              <h2 className={`font-bold text-gray-900 dark:text-white ${compact ? 'text-base' : 'text-lg'}`}>{title}</h2>
               {description && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
               )}
@@ -87,20 +89,20 @@ export default function Modal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body (Scrollable) */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+        <div className={`flex-1 min-h-0 overflow-y-auto ${compact ? 'p-4 sm:p-5 space-y-3' : 'p-6 space-y-6'}`}>
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex-shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 rounded-b-2xl">
+          <div className={`flex-shrink-0 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 rounded-b-2xl ${compact ? 'px-5 py-3' : 'px-6 py-4'}`}>
             {footer}
           </div>
         )}

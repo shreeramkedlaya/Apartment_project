@@ -10,7 +10,7 @@ class Block(models.Model):
     
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_block"'
+        db_table = '"apt_data"."blocks"'
 
     def __str__(self):
         return self.name
@@ -21,7 +21,7 @@ class Flat(models.Model):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_flat"'
+        db_table = '"apt_data"."flats"'
         unique_together = ('block', 'number')
 
     def __str__(self):
@@ -41,7 +41,7 @@ class Role(models.Model):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_role"'
+        db_table = '"apt_data"."roles"'
 
     name = models.CharField(max_length=100, unique=True)
     code = models.SlugField(max_length=100, unique=True, blank=True)
@@ -71,7 +71,7 @@ class UserProfile(models.Model):
     """
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_userprofile"'
+        db_table = '"apt_data"."user_profiles"'
         
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     

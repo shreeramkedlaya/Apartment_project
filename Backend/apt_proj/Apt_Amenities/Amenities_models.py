@@ -10,7 +10,7 @@ class Amenity(TimeStampedModel):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_amenity"'
+        db_table = '"apt_data"."amenities"'
 
     def __str__(self):
         return self.name
@@ -32,7 +32,7 @@ class AmenityBooking(TimeStampedModel):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_amenitybooking"'
+        db_table = '"apt_data"."amenity_bookings"'
 
     def __str__(self):
         return f"{self.amenity.name} booked by {self.user.username}"

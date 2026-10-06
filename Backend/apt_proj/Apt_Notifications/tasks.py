@@ -32,7 +32,7 @@ def check_slas_and_escalate():
     issues = Issue.objects.filter(
         created_at__lt=sla_threshold,
         status__in=[Issue.Status.OPEN, Issue.Status.ACKNOWLEDGED],
-    )
+    ).only('id', 'title', 'issue_code', 'issue_metadata', 'priority')
 
     escalated_count = 0
     for issue in issues:
@@ -186,6 +186,7 @@ def send_notification_task(
     
     # 2. WebSocket Delivery
     try:
+        import asyncio
         from asgiref.sync import async_to_sync
         from channels.layers import get_channel_layer
         channel_layer = get_channel_layer()
@@ -199,12 +200,15 @@ def send_notification_task(
             }
         }
         
-        # Broadcast to each targeted user's group
-        if all_users:
-            async_to_sync(channel_layer.group_send)("broadcast", ws_payload)
-        else:
-            for uid in user_ids:
-                async_to_sync(channel_layer.group_send)(f"user_{uid}", ws_payload)
+        async def _dispatch():
+            if all_users:
+                await channel_layer.group_send("broadcast", ws_payload)
+            else:
+                await asyncio.gather(*[
+                    channel_layer.group_send(f"user_{uid}",ws_payload)
+                    for uid in (user_ids or [])
+                ])
+        async_to_sync(_dispatch)()
     except Exception as e:
         logger.warning(f"Failed to dispatch WebSockets: {e}")
         
@@ -231,15 +235,17 @@ def process_scheduled_notices():
     Finds notices that are SCHEDULED and ready to be PUBLISHED,
     publishes them, and triggers their push notifications.
     """
+    from django.db import transaction
     from django.utils import timezone
     from apt_proj.Apt_Notices.Notices_models import Notice
     from apt_proj.Apt_Notices.services.notice_service import _trigger_publish_events
     
     now = timezone.now()
-    scheduled_notices = Notice.objects.filter(
-        status=Notice.Status.SCHEDULED,
-        publish_date__lte=now
-    )
+    with transaction.atomic():
+        scheduled_notices = Notice.objects.select_for_update(skip_locked=True).filter(
+            status=Notice.Status.SCHEDULED,
+            publish_date__lte=now
+        )
     
     published_count = 0
     for notice in scheduled_notices:

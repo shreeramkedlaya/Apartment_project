@@ -97,7 +97,6 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
     onSelectionChange,
     defaultView,
     renderCard: !!renderCard,
-    serverSide: !!api,
     totalItems,
   });
 
@@ -112,6 +111,7 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
       const params: Record<string, any> = {
         page,
         page_size: pageSize,
+        ...activeFilters,
       };
 
       if (search && search.trim()) {
@@ -148,7 +148,7 @@ const DataTable = forwardRef<DataTableRef, DataTableProps>(({
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, sortConfig]);
+  }, [page, pageSize, search, sortConfig, activeFilters]);
 
   useImperativeHandle(ref, () => ({
     refresh: fetchData

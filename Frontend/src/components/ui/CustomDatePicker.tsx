@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface CustomDatePickerProps {
   value: string;
@@ -17,7 +17,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
+const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   value,
   onChange,
   mode = 'datetime',
@@ -35,7 +35,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   const initialDate = value ? new Date(value) : new Date();
   const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
   const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
-  
+
   // Selected date state
   const [selectedDate, setSelectedDate] = useState<Date | null>(value ? new Date(value) : null);
 
@@ -90,7 +90,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       if (triggerRef.current && !triggerRef.current.contains(target) &&
-          menuRef.current && !menuRef.current.contains(target)) {
+        menuRef.current && !menuRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -131,14 +131,14 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       updated.setMinutes(parseInt(m, 10));
       updated.setSeconds(0);
     } else {
-      updated.setHours(0, 0, 0, 0);
+      updated.setHours(23, 59, 59, 0);
     }
-    
+
     // Convert to ISO format but preserve local time by adjusting for timezone offset
     // This prevents the date from shifting when converted to ISO string
     const offset = updated.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(updated.getTime() - offset)).toISOString().slice(0, -1);
-    
+
     onChange(localISOTime);
   };
 
@@ -187,7 +187,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   // Generate calendar days
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-  
+
   const blanks = Array(firstDayOfMonth).fill(null);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
@@ -197,7 +197,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     const m = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
     const y = selectedDate.getFullYear();
     const dateStr = `${d}/${m}/${y}`;
-    
+
     if (mode === 'date') return dateStr;
     const timeStr = `${hours}:${minutes}`;
     if (mode === 'time') return timeStr;
@@ -211,19 +211,18 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full min-h-[38px] px-3.5 py-2 text-left bg-white dark:bg-gray-800 border rounded-lg flex items-center justify-between gap-2 transition-all outline-none shadow-xs select-none ${
-          disabled ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700'
+        className={`w-full min-h-[38px] px-3 py-1.5 text-left bg-white dark:bg-gray-900 border rounded-lg flex items-center justify-between gap-2 transition-all outline-none shadow-xs select-none cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-800'
           : isOpen ? 'border-blue-500 ring-2 ring-blue-500/20'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-        }`}
+            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+          }`}
       >
-        <span className={`text-sm truncate ${!selectedDate ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+        <span className={`text-xs truncate font-medium ${!selectedDate ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
           {formatDisplayValue()}
         </span>
         {mode === 'time' ? (
-          <Clock className="w-4 h-4 text-gray-400 shrink-0" />
+          <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
         ) : (
-          <CalendarIcon className="w-4 h-4 text-gray-400 shrink-0" />
+          <CalendarIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
         )}
       </button>
 
@@ -236,46 +235,78 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             bottom: position.placement === 'top' ? `${window.innerHeight - position.top}px` : 'auto',
             left: `${position.left}px`,
             zIndex: 99999,
-            width: '280px'
+            width: '264px'
           }}
-          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5 dark:ring-white/10"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col select-none"
         >
           {(mode === 'date' || mode === 'datetime') && (
-            <div className="p-3 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center justify-between mb-3">
-                <button onClick={prevMonth} type="button" className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-600 dark:text-gray-300 transition-colors">
+            <div className="p-3">
+              {/* Header: Month / Year / Prev / Next */}
+              <div className="flex items-center justify-between gap-1 mb-2.5">
+                <button
+                  onClick={prevMonth}
+                  type="button"
+                  className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors cursor-pointer"
+                >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {MONTHS[currentMonth]} {currentYear}
+                <div className="flex items-center gap-1">
+                  <select
+                    value={currentMonth}
+                    onChange={e => setCurrentMonth(Number(e.target.value))}
+                    className="appearance-none [background-image:none] text-xs font-semibold text-gray-800 dark:text-gray-200 bg-gray-100/80 dark:bg-gray-800/90 hover:bg-gray-200/70 dark:hover:bg-gray-700/80 border-0 rounded-md px-2.5 py-1 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors text-center"
+                  >
+                    {MONTHS.map((m, idx) => (
+                      <option key={m} value={idx} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={currentYear}
+                    onChange={e => setCurrentYear(Number(e.target.value))}
+                    className="appearance-none [background-image:none] text-xs font-semibold text-gray-800 dark:text-gray-200 bg-gray-100/80 dark:bg-gray-800/90 hover:bg-gray-200/70 dark:hover:bg-gray-700/80 border-0 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors text-center"
+                  >
+                    {Array.from({ length: 21 }, (_, i) => new Date().getFullYear() - 5 + i).map(y => (
+                      <option key={y} value={y} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">{y}</option>
+                    ))}
+                  </select>
                 </div>
-                <button onClick={nextMonth} type="button" className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-600 dark:text-gray-300 transition-colors">
+                <button
+                  onClick={nextMonth}
+                  type="button"
+                  className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors cursor-pointer"
+                >
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-              
+
+              {/* Day Headers */}
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {DAYS_OF_WEEK.map(d => (
-                  <div key={d} className="text-center text-[10px] font-medium text-gray-400 uppercase">
+                  <div key={d} className="text-center text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">
                     {d}
                   </div>
                 ))}
               </div>
-              
+
+              {/* Calendar Days Matrix */}
               <div className="grid grid-cols-7 gap-1">
-                {blanks.map((_, i) => <div key={`blank-${i}`} />)}
+                {blanks.map((_, i) => <div key={`blank-${i}`} className="w-7 h-7" />)}
                 {days.map(day => {
                   const isSelected = selectedDate?.getDate() === day && selectedDate?.getMonth() === currentMonth && selectedDate?.getFullYear() === currentYear;
+                  const today = new Date();
+                  const isToday = today.getDate() === day && today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+
                   return (
                     <button
                       key={day}
                       type="button"
                       onClick={() => handleDateClick(day)}
-                      className={`h-8 w-8 text-xs rounded-full flex items-center justify-center transition-colors ${
-                        isSelected 
-                          ? 'bg-blue-600 text-white font-medium shadow-sm' 
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
+                      className={`w-7 h-7 text-xs font-medium rounded-md flex items-center justify-center transition-all cursor-pointer ${isSelected
+                        ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                        : isToday
+                          ? 'border border-blue-500/60 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
                     >
                       {day}
                     </button>
@@ -285,28 +316,35 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             </div>
           )}
 
+          {/* Time Picker Toolbar */}
           {(mode === 'time' || mode === 'datetime') && (
-            <div className="p-3 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400 mr-1" />
-              <select 
-                value={hours}
-                onChange={e => handleTimeChange('hours', e.target.value)}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500/50"
-              >
-                {Array.from({length: 24}, (_, i) => String(i).padStart(2, '0')).map(h => (
-                  <option key={h} value={h}>{h}</option>
-                ))}
-              </select>
-              <span className="text-gray-500 font-medium">:</span>
-              <select 
-                value={minutes}
-                onChange={e => handleTimeChange('minutes', e.target.value)}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500/50"
-              >
-                {['00', '15', '30', '45'].map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+            <div className="px-3 py-2 bg-gray-50/80 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Time</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <select
+                  value={hours}
+                  onChange={e => handleTimeChange('hours', e.target.value)}
+                  className="appearance-none [background-image:none] w-11 text-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-md py-0.5 px-0 text-xs font-mono font-medium text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-xs transition-colors"
+                >
+                  {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
+                    <option key={h} value={h} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">{h}</option>
+                  ))}
+                </select>
+                <span className="text-gray-400 font-bold text-xs">:</span>
+                <select
+                  value={minutes}
+                  onChange={e => handleTimeChange('minutes', e.target.value)}
+                  className="appearance-none [background-image:none] w-11 text-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-md py-0.5 px-0 text-xs font-mono font-medium text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-xs transition-colors"
+                >
+                  {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                    <option key={m} value={m} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">{m}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>,
@@ -315,3 +353,5 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     </div>
   );
 };
+
+export default CustomDatePicker;

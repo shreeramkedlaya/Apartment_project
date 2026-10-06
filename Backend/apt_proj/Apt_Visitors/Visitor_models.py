@@ -26,8 +26,11 @@ class VisitorLog(TimeStampedModel):
 
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_visitor_log"'
+        db_table = '"apt_data"."visitor_logs"'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['flat', 'created_at'], name='visitor_flat_date_idx'),
+        ]
 
     def __str__(self):
         visitor_name = self.details.get('name', 'Unknown Visitor')

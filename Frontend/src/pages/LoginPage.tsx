@@ -210,21 +210,29 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">Mobile Number</label>
-                <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all bg-white dark:bg-gray-800">
-                  <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border-r border-gray-200 dark:border-gray-700 flex items-center gap-2 text-gray-500 dark:text-gray-400 font-medium">
+                <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500
+                focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all bg-white dark:bg-gray-800">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border-r border-gray-200 dark:border-gray-700
+                  flex items-center gap-2 text-gray-500 dark:text-gray-400 font-medium">
                     <Phone className="w-4 h-4" /> +91
                   </div>
-                  <input type="tel" maxLength={10} required value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} placeholder="10-digit number" className="flex-1 bg-transparent px-4 py-3 text-gray-900 dark:text-white font-medium outline-none placeholder-gray-300 dark:placeholder-gray-600" />
+                  <input type="tel" maxLength={10} required value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="10-digit number" className="flex-1 bg-transparent px-4 py-3 text-gray-900 dark:text-white font-medium
+                  border-0 focus:ring-0 focus:outline-none placeholder-gray-300 dark:placeholder-gray-600" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold tracking-wide text-gray-500 dark:text-gray-400 uppercase">4-Digit MPIN</label>
-                <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all relative bg-white dark:bg-gray-800">
+                <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus-within:border-blue-500
+                focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 transition-all relative bg-white
+                dark:bg-gray-800">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                     <Lock className="w-4 h-4" />
                   </div>
-                  <input type="password" maxLength={4} required value={mpin} onChange={(e) => setMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3 text-xl tracking-[0.2em] font-mono font-medium text-gray-900 dark:text-white outline-none placeholder-gray-300 dark:placeholder-gray-600" />
+                  <input type="password" maxLength={4} required value={mpin} onChange={(e) => setMpin(e.target.value.replace(/\D/g, ''))}
+                    placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3 text-xl tracking-[0.2em] font-mono font-medium
+                    text-gray-900 dark:text-white border-0 focus:ring-0 outline-none placeholder-gray-300 dark:placeholder-gray-600" />
                 </div>
                 <div className="flex justify-end mt-1">
                   <button type="button" onClick={() => { setMode('forgot'); setForgotStep(1); setError(''); }} className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline">
@@ -256,7 +264,7 @@ export default function LoginPage() {
                       <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border-r border-gray-200 dark:border-gray-700 flex items-center gap-2 text-gray-500 dark:text-gray-400 font-medium">
                         <Phone className="w-4 h-4" /> +91
                       </div>
-                      <input type="tel" maxLength={10} required value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} placeholder="10-digit number" className="flex-1 bg-transparent px-4 py-3 text-gray-900 dark:text-white font-medium outline-none placeholder-gray-300 dark:placeholder-gray-600" />
+                      <input type="tel" maxLength={10} required value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} placeholder="10-digit number" className="flex-1 bg-transparent px-4 py-3 text-gray-900 dark:text-white font-medium border-0 focus:ring-0 outline-none placeholder-gray-300 dark:placeholder-gray-600" />
                     </div>
                   </div>
                   <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
@@ -289,7 +297,7 @@ export default function LoginPage() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                         <KeyRound className="w-4 h-4" />
                       </div>
-                      <input type="password" maxLength={4} required value={mpin} onChange={(e) => setMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3.5 text-center tracking-[0.5em] font-mono text-xl text-gray-900 dark:text-white outline-none placeholder-gray-200 dark:placeholder-gray-600" />
+                      <input type="password" maxLength={4} required value={mpin} onChange={(e) => setMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3.5 text-center tracking-[0.5em] font-mono text-xl text-gray-900 dark:text-white border-0 focus:ring-0 outline-none placeholder-gray-200 dark:placeholder-gray-600" />
                     </div>
                   </div>
 
@@ -299,7 +307,7 @@ export default function LoginPage() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                         <KeyRound className="w-4 h-4" />
                       </div>
-                      <input type="password" maxLength={4} required value={confirmMpin} onChange={(e) => setConfirmMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3.5 text-center tracking-[0.5em] font-mono text-xl text-gray-900 dark:text-white outline-none placeholder-gray-200 dark:placeholder-gray-600" />
+                      <input type="password" maxLength={4} required value={confirmMpin} onChange={(e) => setConfirmMpin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="w-full bg-transparent pl-10 pr-4 py-3.5 text-center tracking-[0.5em] font-mono text-xl text-gray-900 dark:text-white border-0 focus:ring-0 outline-none placeholder-gray-200 dark:placeholder-gray-600" />
                     </div>
                   </div>
 

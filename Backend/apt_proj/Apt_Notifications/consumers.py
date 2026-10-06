@@ -123,7 +123,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         event_type = payload.get('event_type', 'notice_published')
         
         ws_msg = {
-            'type': event_type,
             'title': data.get('title'),
         }
         
@@ -131,6 +130,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         for key, value in payload.items():
             if key != 'event_type':
                 ws_msg[key] = value
+                
+        # Ensure 'type' is strictly set to event_type
+        ws_msg['type'] = event_type
         
         # Send message to WebSocket
         await self.send(text_data=json.dumps(ws_msg))

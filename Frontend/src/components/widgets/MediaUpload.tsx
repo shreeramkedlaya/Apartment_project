@@ -17,17 +17,20 @@ export interface MediaUploadProps {
   maxFiles?: number;
   maxFileSizeMB?: number;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 // Subcomponent to handle individual file uploads
 const FileItem = ({
   file,
   onRemove,
-  onUploadComplete
+  onUploadComplete,
+  compact = false
 }: {
   file: UploadedFile,
   onRemove: () => void,
-  onUploadComplete: (file: UploadedFile, mediaId: string, proofToken: string) => void
+  onUploadComplete: (file: UploadedFile, mediaId: string, proofToken: string) => void,
+  compact?: boolean
 }) => {
   const { uploadState, uploadFile } = useMediaUploader();
   const hasStartedUpload = useRef(false);
@@ -49,6 +52,34 @@ const FileItem = ({
 
   const status = uploadState?.status || (file.proofToken ? 'success' : file.uploadFailed ? 'error' : 'idle');
   const progress = uploadState?.progress || 0;
+
+  if (compact) {
+    return (
+      <div className="relative group rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 px-2 py-1 flex items-center justify-between gap-2 shadow-xs">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {file.type.startsWith('image/') && file.previewUrl ? (
+            <img src={file.previewUrl} alt={file.name} className="w-5 h-5 object-cover rounded shrink-0" />
+          ) : (
+            <FileIcon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          )}
+          <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300 truncate max-w-[120px]" title={file.name}>{file.name}</span>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {status === 'uploading' && <span className="text-[10px] text-blue-500 font-semibold">{progress}%</span>}
+          {status === 'success' && <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />}
+          {status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-500" />}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            className="p-0.5 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative group rounded-lg overflow-hidden border border-gray-200 bg-gray-50 aspect-video flex items-center justify-center">
@@ -110,6 +141,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   maxFiles = 1,
   maxFileSizeMB = 150,
   disabled = false,
+  compact = false,
 }) => {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,8 +163,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
     newFiles.forEach((file) => {
       // Check file type
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        showToast(`File ${file.name} is not an image or video.`, 'error');
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/') && file.type !== 'application/pdf') {
+        showToast(`File ${file.name} is not a supported image, video or PDF.`, 'error');
         return;
       }
 
@@ -211,41 +243,72 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   return (
     <div className="w-full">
-      {label && <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{label}</label>}
+      {label && <label className={`block font-medium text-gray-700 dark:text-gray-300 ${compact ? 'text-xs mb-1' : 'text-sm mb-2'}`}>{label}</label>}
 
       {(!value || value.length < maxFiles) && (
-        <div onClick={() => fileInputRef.current?.click()}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDrop={onDrop}
-          className={`
-            relative cursor-pointer w-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-colors
-            ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-800'}
-            ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
-          `}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={onFileSelect}
-            onClick={(e) => e.stopPropagation()}
-            multiple={maxFiles > 1}
-            accept="image/*,video/*"
-            className="hidden"
-            disabled={disabled}
-          />
-          <UploadCloud className={`w-10 h-10 mb-3 ${isDragging ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`} />
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Click to upload or drag and drop</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Images and Videos only (max {maxFileSizeMB}MB)</p>
-        </div>
+        compact ? (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            className={`
+              relative cursor-pointer w-full flex items-center justify-between px-3 py-2 border border-dashed rounded-lg transition-colors
+              ${isDragging ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'}
+              ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
+            `}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={onFileSelect}
+              onClick={(e) => e.stopPropagation()}
+              multiple={maxFiles > 1}
+              accept="image/*,video/*,application/pdf"
+              className="hidden"
+              disabled={disabled}
+            />
+            <div className="flex items-center gap-2">
+              <UploadCloud className={`w-4 h-4 ${isDragging ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'}`} />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Click to attach files or drag here</span>
+            </div>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">Max {maxFiles} files</span>
+          </div>
+        ) : (
+          <div onClick={() => fileInputRef.current?.click()}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            className={`
+              relative cursor-pointer w-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-colors
+              ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-800'}
+              ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
+            `}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={onFileSelect}
+              onClick={(e) => e.stopPropagation()}
+              multiple={maxFiles > 1}
+              accept="image/*,video/*"
+              className="hidden"
+              disabled={disabled}
+            />
+            <UploadCloud className={`w-10 h-10 mb-3 ${isDragging ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`} />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Click to upload or drag and drop</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Images and Videos only (max {maxFileSizeMB}MB)</p>
+          </div>
+        )
       )}
 
       {value && value.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className={`mt-2 ${compact ? 'flex flex-wrap gap-2' : 'grid grid-cols-2 sm:grid-cols-3 gap-4'}`}>
           {value.map((file, idx) => (
             <FileItem
               key={idx}
               file={file}
+              compact={compact}
               onRemove={() => removeFile(idx)}
               onUploadComplete={handleUploadComplete}
             />

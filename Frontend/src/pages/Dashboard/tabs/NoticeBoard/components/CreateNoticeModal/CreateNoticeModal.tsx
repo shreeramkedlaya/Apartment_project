@@ -1,26 +1,33 @@
-import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
-import { Loader2, Save, Send, ChevronRight, ChevronLeft, Megaphone, Calendar, AlertCircle } from 'lucide-react';
+import { AlertCircle, Calendar, ChevronLeft, ChevronRight, Loader2, Megaphone, Save, Send } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import ContentSection from './components/ContentSection';
+import ModalStepper from './components/ModalStepper';
+import SchedulingSection from './components/SchedulingSection';
+import TargetAudienceSection from './components/TargetAudienceSection';
 import { useNoticeForm } from './hooks/useNoticeForm';
-import { ContentSection } from './components/ContentSection';
-import { TargetAudienceSection } from './components/TargetAudienceSection';
-import { SchedulingSection } from './components/SchedulingSection';
 import type { UseNoticeFormProps } from './types/noticeForm.types';
-import { ModalStepper } from './components/ModalStepper';
 import { MODAL_STEPS } from './utils/noticeConstants';
 
-interface CreateNoticeModalProps extends UseNoticeFormProps {
-  isOpen: boolean;
-}
-
-const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
+const CreateNoticeModal: React.FC<UseNoticeFormProps> = ({
   isOpen,
   onClose,
   editNotice,
   onNoticeCreated,
   onNoticeUpdated,
 }) => {
-  const form = useNoticeForm({ editNotice, onNoticeCreated, onNoticeUpdated, onClose });
+  const {
+    formData,
+    updateField,
+    setFormData,
+    availableRoles,
+    availableBlocks,
+    loading,
+    isDirty,
+    handleSubmit,
+    resetForm,
+  } = useNoticeForm({ isOpen, editNotice, onNoticeCreated, onNoticeUpdated, onClose });
+
   const [step, setStep] = useState(1);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -30,12 +37,12 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
       setStep(1);
       setShowExitConfirm(false);
     } else {
-      form.resetForm();
+      resetForm();
     }
-  }, [isOpen, form.resetForm]);
+  }, [isOpen, resetForm]);
 
   const handleRequestClose = () => {
-    if (!editNotice && form.isDirty) {
+    if (!editNotice && isDirty) {
       setShowExitConfirm(true);
     } else {
       onClose();
@@ -46,26 +53,33 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
   const handleBack = () => setStep(s => Math.max(1, s - 1));
 
   const isStepValid = () => {
-    if (step === 1) return form.title.trim().length > 0 && form.content.trim().length > 0;
+    if (step === 1) return formData.title.trim().length > 0 && formData.content.trim().length > 0;
     if (step === 2) {
-      if (form.audienceType === 'roles') return form.targetRoles.length > 0;
-      if (form.audienceType === 'blocks') return form.targetBlocks.length > 0 || form.targetFlats.length > 0;
-      return true; // everyone
+      if (formData.audienceType === 'roles') return formData.targetRoles.length > 0;
+      if (formData.audienceType === 'blocks') return formData.targetBlocks.length > 0 || formData.targetFlats.length > 0;
+      return true;
+    }
+    if (step === 3) {
+      if (formData.publishMode === 'scheduled') {
+        if (!formData.publishDate) return false;
+        if (new Date(formData.publishDate).getTime() <= Date.now()) return false;
+      }
+      return true;
     }
     return true;
   };
 
   const submitButtonLabel = editNotice
     ? 'Save Changes'
-    : form.publishMode === 'scheduled'
+    : formData.publishMode === 'scheduled'
       ? 'Schedule Notice'
       : 'Publish Notice';
 
-  const SubmitIcon = form.loading
+  const SubmitIcon = loading
     ? Loader2
     : editNotice
       ? Save
-      : form.publishMode === 'scheduled'
+      : formData.publishMode === 'scheduled'
         ? Calendar
         : Send;
 
@@ -97,14 +111,14 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            handleSubmit();
           }}
-          disabled={form.loading || !isStepValid()}
+          disabled={loading || !isStepValid()}
           className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700
           disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold
           rounded-xl transition-all shadow-sm active:scale-95"
         >
-          <SubmitIcon className={`w-4 h-4 ${form.loading ? 'animate-spin' : ''}`} />
+          <SubmitIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           {submitButtonLabel}
         </button>
       )}
@@ -121,23 +135,19 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
         icon={<Megaphone className="w-5 h-5" />}
         footer={modalFooter}
         maxWidth="2xl"
+        compact
       >
-        <div className="flex flex-col gap-4">
-          <div className="pt-2 px-2">
+        <div className="flex flex-col gap-3">
+          <div className="pb-1">
             <ModalStepper steps={MODAL_STEPS} currentStep={step} />
           </div>
 
-          <div className="min-h-[300px] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 bg-white dark:bg-gray-900 shadow-sm">
+          <div className="min-h-[250px]">
             {step === 1 && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <ContentSection
-                  title={form.title} setTitle={form.setTitle}
-                  category={form.category} setCategory={form.setCategory}
-                  content={form.content} setContent={form.setContent}
-                  priority={form.priority} setPriority={form.setPriority}
-                  requiresAck={form.requiresAck} setRequiresAck={form.setRequiresAck}
-                  acknowledgeBy={form.acknowledgeBy} setAcknowledgeBy={form.setAcknowledgeBy}
-                  files={form.files} setFiles={form.setFiles}
+                  formData={formData}
+                  updateField={updateField}
                   editNotice={!!editNotice}
                 />
               </div>
@@ -146,16 +156,11 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
             {step === 2 && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <TargetAudienceSection
-                  audienceType={form.audienceType}
-                  setAudienceType={form.setAudienceType}
-                  availableRoles={form.availableRoles}
-                  targetRoles={form.targetRoles}
-                  setTargetRoles={form.setTargetRoles}
-                  availableBlocks={form.availableBlocks}
-                  targetBlocks={form.targetBlocks}
-                  setTargetBlocks={form.setTargetBlocks}
-                  targetFlats={form.targetFlats}
-                  setTargetFlats={form.setTargetFlats}
+                  formData={formData}
+                  updateField={updateField}
+                  setFormData={setFormData}
+                  availableRoles={availableRoles}
+                  availableBlocks={availableBlocks}
                 />
               </div>
             )}
@@ -163,9 +168,8 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
             {step === 3 && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <SchedulingSection
-                  publishMode={form.publishMode} setPublishMode={form.setPublishMode}
-                  publishDate={form.publishDate} setPublishDate={form.setPublishDate}
-                  validUntil={form.validUntil} setValidUntil={form.setValidUntil}
+                  formData={formData}
+                  updateField={updateField}
                 />
               </div>
             )}
@@ -173,12 +177,12 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
         </div>
       </Modal>
 
-      {/* Exit Confirmation Dialog (3 Options) */}
+      {/* Exit Confirmation Dialog */}
       {showExitConfirm && (
         <Modal
           isOpen={showExitConfirm}
           onClose={() => setShowExitConfirm(false)}
-          title="Save as Draft?"
+          title="Discard Changes?"
           description="You have unsaved changes in this notice."
           icon={<AlertCircle className="w-5 h-5 text-amber-500" />}
           maxWidth="sm"
@@ -187,7 +191,7 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowExitConfirm(false)}
-                className="w-full sm:w-auto px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+                className="w-full sm:w-auto px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors cursor-pointer"
               >
                 Keep Editing
               </button>
@@ -197,26 +201,15 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({
                   setShowExitConfirm(false);
                   onClose();
                 }}
-                className="w-full sm:w-auto px-3.5 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                className="w-full sm:w-auto px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
               >
                 Discard Changes
-              </button>
-              <button
-                type="button"
-                disabled={form.loading}
-                onClick={async () => {
-                  setShowExitConfirm(false);
-                  await form.saveDraftOnClose();
-                }}
-                className="w-full sm:w-auto px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
-              >
-                {form.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save as Draft'}
               </button>
             </div>
           }
         >
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Would you like to save this notice as a draft so you can finish it later, or discard your changes?
+            Are you sure you want to close? All entered information will be discarded.
           </p>
         </Modal>
       )}

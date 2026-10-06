@@ -122,11 +122,18 @@ const NoticeApprovalsPage: React.FC<NoticeApprovalsPageProps> = () => {
   };
 
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
     const handleNoticeUpdate = () => {
-      tableRef.current?.refresh();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        tableRef.current?.refresh();
+      }, 250);
     };
+
     window.addEventListener('NOTICES_UPDATED', handleNoticeUpdate);
     return () => {
+      clearTimeout(debounceTimer);
       window.removeEventListener('NOTICES_UPDATED', handleNoticeUpdate);
     };
   }, []);

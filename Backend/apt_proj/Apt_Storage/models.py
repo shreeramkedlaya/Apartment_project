@@ -7,7 +7,7 @@ from apt_proj.Apt_Common.models import TimeStampedModel
 class Media(TimeStampedModel):
     class Meta:
         app_label = 'apt_proj'
-        db_table = '"apt_data"."apt_proj_media"'
+        db_table = '"apt_data"."media"'
 
     class UploadStatus(models.TextChoices):
         PENDING = 'PENDING', 'Pending'

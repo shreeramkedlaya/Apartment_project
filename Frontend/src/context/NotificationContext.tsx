@@ -107,11 +107,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout>;
+    let isCancelled = false;
 
     const connectWebSocket = async () => {
       // 1. Get the current valid access token
       const token = await getValidToken();
-      if (!token) return;
+      if (isCancelled || !token) return;
 
       const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
 
@@ -258,6 +259,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     // Cleanup when component unmounts or user logs out
     return () => {
+      isCancelled = true;
       clearTimeout(reconnectTimeout);
       if (ws) {
         ws.close();

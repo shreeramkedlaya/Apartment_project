@@ -31,16 +31,18 @@ class ResidentNoticeListAPIView(APIView):
         ).order_by('-publish_date')
         targeted_notices = get_targeted_notices_for_user(request.user, notices)
         
-        serializer = NoticeSerializer(targeted_notices, many=True)
+        serializer = NoticeSerializer(targeted_notices, many=True, context={'request': request})
         return Response(serializer.data)
 
 class NoticeAcknowledgeAPIView(NoticeBaseAPIView):
     def post(self, request, pk):
         notice = self.get_object(pk)
+        action = request.data.get('action', 'accept') if isinstance(request.data, dict) else 'accept'
         try:
             ack = notice_service.acknowledge_notice(
                 notice=notice,
-                user=request.user if request.user.is_authenticated else None
+                user=request.user if request.user.is_authenticated else None,
+                action=action
             )
             return Response(NoticeAcknowledgementSerializer(ack).data)
         except DjangoValidationError as e:
