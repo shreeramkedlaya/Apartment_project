@@ -142,3 +142,21 @@ Notice creation directly honors publication intent:
    - Future `publish_date` $\rightarrow$ set `status = Notice.Status.SCHEDULED`.
    - Empty or current `publish_date` $\rightarrow$ set `status = Notice.Status.PUBLISHED`, stamp `publish_date = now()`, and fire the notification pipeline.
 2. If explicit draft mode is chosen (e.g. "Save as Draft" button) $\rightarrow$ set `status = Notice.Status.DRAFT`.
+
+---
+
+## 6. Frontend Architecture & UI/UX
+
+### Unified Form State (`useNoticeForm`)
+- The `CreateNoticeModal` utilizes a custom React hook (`useNoticeForm`) that consolidates all creation logic, replacing disparate `useState` hooks.
+- It provides a robust payload builder and enforces intelligent defaults, such as automatically setting `valid_until` to exactly two weeks from the publish date.
+
+### Inline Pill Stepper
+- The modal uses a highly compact inline pill stepper rather than a traditional bloated vertical wizard:
+  - **① Content**: Strictly for pure content composition (Title, Category, Priority, Rich Text).
+  - **② Audience**: Multi-dimensional role, block, and flat targeting matrix.
+  - **③ Scheduling**: "Requires Acknowledgement" flag, `acknowledge_by` date picker, publish scheduling, and expiry dates.
+- By moving acknowledgement logic to Step 3, Step 1 remains distraction-free, minimizing unnecessary scrolling.
+
+### UI Component Polish
+- The date pickers and dropdowns utilize sleek, native-feel inputs without overlapping chevrons (resolved via `[background-image:none]`), maintaining the dynamic, premium aesthetic of the platform.
