@@ -49,3 +49,20 @@ class UserDetailSerializer(UserSerializer):
         if hasattr(obj, 'profile'):
             return obj.profile.get_effective_permissions()
         return []
+
+from ..Accounts_models import CoResident, Vehicle, PersonalEmergencyContact
+
+class CoResidentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CoResident
+        fields = ['id', 'name', 'relation', 'age', 'phone_number']
+
+class VehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['id', 'vehicle_type', 'make', 'model', 'license_plate']
+
+class PersonalEmergencyContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersonalEmergencyContact
+        fields = ['id', 'name', 'relation', 'phone_number', 'is_primary']

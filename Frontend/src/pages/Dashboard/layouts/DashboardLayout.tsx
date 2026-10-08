@@ -34,7 +34,8 @@ const AmenityApprovalsPage = lazy(() => import('@/pages/Dashboard/tabs/Managemen
 // Emergency
 const EmergencyPage = lazy(() => import('@/pages/Dashboard/tabs/Emergency/EmergencyPage'));
 
-// Settings
+// Settings & Profile
+const ProfilePage = lazy(() => import('@/pages/Dashboard/tabs/Profile/ProfilePage'));
 const SettingsPage = lazy(() => import('@/pages/Dashboard/tabs/Settings/SettingsPage'));
 
 const QuickLoader = () => (
@@ -53,7 +54,7 @@ export default function DashboardLayout() {
   // Render the correct component based on activeTab and activeSubTab
   const renderContent = useCallback(() => {
     // Route Protection
-    if (user?.permissionTabs !== "All" && activeTab !== 'dashboard' && activeTab !== 'settings') {
+    if (user?.permissionTabs !== "All" && activeTab !== 'dashboard' && activeTab !== 'settings' && activeTab !== 'profile') {
       const matchedTab = NAVIGATION.find(t => t.id === activeTab);
       if (!matchedTab) return <PlaceholderPage title="Not Found" />;
 
@@ -93,6 +94,8 @@ export default function DashboardLayout() {
         return <PlaceholderPage title={`Community: ${activeSubTab}`} />;
       case 'emergency':
         return <EmergencyPage />;
+      case 'profile':
+        return <ProfilePage />;
       case 'settings':
         return <SettingsPage />;
       default:
@@ -142,7 +145,7 @@ export default function DashboardLayout() {
           isDarkMode={theme === 'dark'}
           toggleDarkMode={toggleTheme}
         />
-        
+
         <ActiveAlertBanner />
 
         {/* Main Content Area */}
@@ -154,7 +157,7 @@ export default function DashboardLayout() {
           </div>
         </main>
       </div>
-      
+
       {/* Global Intercept Modals */}
       <VisitorInterceptModal />
     </div>

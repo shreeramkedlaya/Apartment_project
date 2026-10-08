@@ -21,44 +21,72 @@ def check_slas_and_escalate():
     Checks for issues in 'Open' or 'Acknowledged' state that are older than 24 hours.
     Escalates them to High priority and triggers a notification to managers.
     """
+    import uuid
     from django.contrib.auth import get_user_model
     from datetime import timedelta
     from django.utils import timezone
     from apt_proj.Apt_Issues.Issue_models import Issue, IssueTimeline
-    
-    User = get_user_model
+    from django.db import transaction
+
+    User = get_user_model()
     sla_threshold = timezone.now() - timedelta(hours=24)
 
-    issues = Issue.objects.filter(
+    # Use select_related to avoid N+1 query for IssueTimeline
+    issues = Issue.objects.select_related('timeline_record').filter(
         created_at__lt=sla_threshold,
-        status__in=[Issue.Status.OPEN, Issue.Status.ACKNOWLEDGED],
-    ).only('id', 'title', 'issue_code', 'issue_metadata', 'priority')
+        status__in=['Open', 'Acknowledged'],
+    ).only('id', 'title', 'issue_metadata', 'priority', 'timeline_record__history')
 
     escalated_count = 0
-    for issue in issues:
-        metadata = issue.issue_metadata or {}
-        if metadata.get('is_escalated'):
-            continue
-        
-        # escalate issue
-        metadata['is_escalated'] = True
-        issue.issue_metadata = metadata
-        issue.priority = 'High'
-        issue.save(update_fields=['issue_metadata', 'priority','updated_at'])
+    issues_to_update = []
+    timelines_to_update = []
+    
+    with transaction.atomic():
+        for issue in issues:
+            metadata = issue.issue_metadata or {}
+            if metadata.get('is_escalated'):
+                continue
+            
+            # escalate issue
+            metadata['is_escalated'] = True
+            issue.issue_metadata = metadata
+            issue.priority = 'High'
+            issue.updated_at = timezone.now()
+            issues_to_update.append(issue)
 
-        # log timeline
-        timeline,_ = IssueTimeline.objects.get_or_create(issue=issue)
-        event = {
-            "id": str(uuid.uuid4()),
-            "status_from": None,
-            "status_to": None,
-            "comment": "SLA breached (24h). Issue automatically escalated to High priority.",
-            "created_at": timezone.now().isoformat(),
-            "updated_by": {"id": "system", "name": "System"}
-        }
-        timeline.history.append(event)
-        timeline.save(update_fields=['history'])
+            # log timeline
+            try:
+                timeline = issue.timeline_record
+            except IssueTimeline.DoesNotExist:
+                timeline = IssueTimeline(issue=issue)
+                
+            event = {
+                "id": str(uuid.uuid4()),
+                "status_from": None,
+                "status_to": None,
+                "comment": "SLA breached (24h). Issue automatically escalated to High priority.",
+                "created_at": timezone.now().isoformat(),
+                "updated_by": {"id": "system", "name": "System"}
+            }
+            timeline.history.append(event)
+            timelines_to_update.append(timeline)
 
+            escalated_count += 1
+
+        if issues_to_update:
+            Issue.objects.bulk_update(issues_to_update, ['issue_metadata', 'priority', 'updated_at'])
+            
+            # For timelines, bulk_update if they exist, bulk_create if new.
+            # But Django's bulk_update requires PKs, so let's separate them.
+            existing_timelines = [t for t in timelines_to_update if t.pk]
+            new_timelines = [t for t in timelines_to_update if not t.pk]
+            
+            if existing_timelines:
+                IssueTimeline.objects.bulk_update(existing_timelines, ['history'])
+            if new_timelines:
+                IssueTimeline.objects.bulk_create(new_timelines)
+
+    if escalated_count > 0:
         # notify admins/managers
         try:
             manager_ids = list(User.objects.filter(
@@ -66,17 +94,18 @@ def check_slas_and_escalate():
             ).values_list('id',flat=True))
 
             if manager_ids:
-                send_notification_task.delay(
-                    title=f"🚨 SLA Breach: {issue.title}",
-                    body=f"Issue #{issue.issue_code or issue.id} has breached the 24h SLA.",
-                    data={"event_type": "issue_updated", "issue_id": issue.id},
-                    user_ids=manager_ids
-                )
+                for issue in issues_to_update:
+                    send_notification_task.delay(
+                        title=f"🚨 SLA Breach: {issue.title}",
+                        body=f"Issue #{issue.id} has breached the 24h SLA.",
+                        data={"event_type": "issue_updated", "issue_id": issue.id},
+                        user_ids=manager_ids
+                    )
         except Exception as e:
-            logger.error(f"Failed to send escalation notification for issue {issue.id}: {e}")
-        escalated_count += 1
-    if escalated_count > 0:
+            logger.error(f"Failed to send escalation notification: {e}")
+            
         logger.info(f"Escalated {escalated_count} issues due to SLA breach.")
+        
     return {"escalated_count": escalated_count}
 
         
@@ -241,23 +270,28 @@ def process_scheduled_notices():
     from apt_proj.Apt_Notices.services.notice_service import _trigger_publish_events
     
     now = timezone.now()
+    published_notices = []
     with transaction.atomic():
-        scheduled_notices = Notice.objects.select_for_update(skip_locked=True).filter(
-            status=Notice.Status.SCHEDULED,
-            publish_date__lte=now
+        # Evaluate queryset inside transaction with row-level locks
+        scheduled_notices = list(
+            Notice.objects.select_for_update(skip_locked=True).filter(
+                status=Notice.Status.SCHEDULED,
+                publish_date__lte=now
+            )
         )
-    
-    published_count = 0
-    for notice in scheduled_notices:
-        notice.status = Notice.Status.PUBLISHED
-        # If the notice was just scheduled without a publish_date (shouldn't happen), set it
-        if not notice.publish_date:
-            notice.publish_date = now
-        notice.save()
-        _trigger_publish_events(notice)
-        published_count += 1
-        
+        for notice in scheduled_notices:
+            notice.status = Notice.Status.PUBLISHED
+            if not notice.publish_date:
+                notice.publish_date = now
+            notice.save(update_fields=['status', 'publish_date', 'updated_at'])
+            published_notices.append(notice)
+    # Trigger publish events (FCM, acks, WebSockets) after transaction commits
+    for notice in published_notices:
+        try:
+            _trigger_publish_events(notice)
+        except Exception as e:
+            logger.error(f"Failed to trigger publish events for notice {notice.id}: {e}")
+    published_count = len(published_notices)
     if published_count > 0:
         logger.info(f"Published {published_count} scheduled notices.")
-        
     return {"published": published_count}

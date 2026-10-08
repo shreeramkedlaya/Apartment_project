@@ -27,8 +27,8 @@ export interface VisitorLog {
   updated_at: string;
 }
 
-export const getVisitorLogs = async () => {
-  const response = await axiosInstance.get<VisitorLog[]>('/visitors/');
+export const getVisitorLogs = async (params: any = {}) => {
+  const response = await axiosInstance.get<any>('/visitors/', { params });
   return response.data;
 };
 

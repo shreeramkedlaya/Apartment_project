@@ -1,35 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { fetchAmenityBookings, fetchAmenities, approveBooking, rejectBooking, type AmenityBooking, type Amenity } from '@/services/amenity.service';
 import { useToast } from '@/context/ToastContext';
-import { Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import DataTable from '@/components/common/DataTable/DataTable';
+import type { Column, DataTableRef } from '@/components/common/DataTable/types/types';
 
 interface AmenityApprovalsPageProps {}
 
 const AmenityApprovalsPage: React.FC<AmenityApprovalsPageProps> = () => {
-    const [bookings, setBookings] = useState<AmenityBooking[]>([]);
     const [amenities, setAmenities] = useState<Amenity[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingAmenities, setLoadingAmenities] = useState(true);
     const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+    const pendingTableRef = useRef<DataTableRef>(null);
+    const historyTableRef = useRef<DataTableRef>(null);
 
     const { showToast } = useToast();
 
     useEffect(() => {
-        loadData();
+        loadAmenities();
     }, []);
 
-    const loadData = async () => {
+    const loadAmenities = async () => {
         try {
-            setLoading(true);
-            const [bookingsData, amenitiesData] = await Promise.all([
-                fetchAmenityBookings(),
-                fetchAmenities()
-            ]);
-            setBookings(bookingsData);
+            setLoadingAmenities(true);
+            const amenitiesData = await fetchAmenities();
             setAmenities(amenitiesData);
         } catch (error) {
-            showToast('Failed to load bookings', 'error');
+            showToast('Failed to load amenities', 'error');
         } finally {
-            setLoading(false);
+            setLoadingAmenities(false);
         }
     };
 
@@ -42,7 +41,9 @@ const AmenityApprovalsPage: React.FC<AmenityApprovalsPageProps> = () => {
                 await rejectBooking(id);
             }
             showToast(`Booking ${action === 'approve' ? 'approved' : 'rejected'} successfully`, 'success');
-            await loadData();
+            // Refresh both tables
+            pendingTableRef.current?.refresh();
+            historyTableRef.current?.refresh();
         } catch (error: any) {
             const errorMsg = error.response?.data?.detail || `Failed to ${action} booking`;
             showToast(errorMsg, 'error');
@@ -51,38 +52,68 @@ const AmenityApprovalsPage: React.FC<AmenityApprovalsPageProps> = () => {
         }
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'confirmed':
-            case 'approved':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-                        <CheckCircle className="w-3 h-3" /> Confirmed
-                    </span>
-                );
-            case 'rejected':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400">
-                        <XCircle className="w-3 h-3" /> Rejected
-                    </span>
-                );
-            case 'cancelled':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
-                        Cancelled
-                    </span>
-                );
-            default:
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                        <Clock className="w-3 h-3" /> Pending Review
-                    </span>
-                );
-        }
+    const getColumns = (): Column[] => {
+        const baseColumns: Column[] = [
+            {
+                header: 'Amenity',
+                type: 'text',
+                accessor: (b: AmenityBooking) => {
+                    const matched = amenities.find(a => a.id === b.amenity);
+                    return matched ? matched.name : `Amenity #${b.amenity}`;
+                },
+                sortable: false, // sorting by related fields usually needs backend support for 'amenity__name', we can disable here
+            },
+            {
+                header: 'Start Time',
+                type: 'text',
+                accessor: (b: AmenityBooking) => new Date(b.start_time).toLocaleString(),
+                sortable: true,
+            },
+            {
+                header: 'End Time',
+                type: 'text',
+                accessor: (b: AmenityBooking) => new Date(b.end_time).toLocaleString(),
+                sortable: true,
+            },
+            {
+                header: 'User',
+                type: 'text',
+                accessor: (b: any) => b.user_name || `User ID ${b.user}`, // Using basic representation if user info is minimal
+            },
+            {
+                header: 'Purpose',
+                type: 'text',
+                accessor: 'purpose',
+            },
+            {
+                header: 'Status',
+                type: 'badge',
+                accessor: (b: AmenityBooking) => {
+                    const s = b.status.toLowerCase();
+                    let label: string = b.status;
+                    let statusClass = 'pending';
+                    if (s === 'confirmed' || s === 'approved') {
+                        label = 'Confirmed';
+                        statusClass = 'confirmed';
+                    } else if (s === 'rejected') {
+                        label = 'Rejected';
+                        statusClass = 'rejected';
+                    } else if (s === 'cancelled') {
+                        label = 'Cancelled';
+                        statusClass = 'cancelled';
+                    }
+                    return { label, status: statusClass };
+                },
+                badgeConfig: {
+                    confirmed: { label: '', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
+                    rejected: { label: '', className: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400' },
+                    cancelled: { label: '', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400' },
+                    pending: { label: '', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' }
+                }
+            }
+        ];
+        return baseColumns;
     };
-
-    const pendingBookings = bookings.filter(b => b.status.toLowerCase() === 'pending');
-    const pastBookings = bookings.filter(b => b.status.toLowerCase() !== 'pending');
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -93,129 +124,78 @@ const AmenityApprovalsPage: React.FC<AmenityApprovalsPageProps> = () => {
                 </p>
             </div>
 
-            {/* Pending Requests Section */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                        Pending Requests ({pendingBookings.length})
-                    </h2>
-                </div>
-
-                {loading ? (
-                    <div className="text-sm text-gray-500">Loading requests...</div>
-                ) : pendingBookings.length === 0 ? (
-                    <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl text-center text-gray-500 text-sm">
-                        No pending amenity bookings requiring approval.
-                    </div>
-                ) : (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-medium border-b border-gray-100 dark:border-gray-700">
-                                    <tr>
-                                        <th className="px-5 py-3">Amenity</th>
-                                        <th className="px-5 py-3">Start Time</th>
-                                        <th className="px-5 py-3">End Time</th>
-                                        <th className="px-5 py-3">Purpose</th>
-                                        <th className="px-5 py-3">Status</th>
-                                        <th className="px-5 py-3 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {pendingBookings.map((b) => {
-                                        const matchedAmenity = amenities.find(a => a.id === b.amenity);
-                                        const isActionLoading = actionLoadingId === b.id;
-                                        return (
-                                            <tr key={b.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30">
-                                                <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-white">
-                                                    {matchedAmenity ? matchedAmenity.name : `Amenity #${b.amenity}`}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-gray-600 dark:text-gray-300">
-                                                    {new Date(b.start_time).toLocaleString()}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-gray-600 dark:text-gray-300">
-                                                    {new Date(b.end_time).toLocaleString()}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-gray-600 dark:text-gray-300">
-                                                    {b.purpose}
-                                                </td>
-                                                <td className="px-5 py-3.5">
-                                                    {getStatusBadge(b.status)}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => handleAction(b.id, 'approve')}
-                                                            disabled={isActionLoading}
-                                                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
-                                                        >
-                                                            <Check className="w-3.5 h-3.5" /> Approve
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleAction(b.id, 'reject')}
-                                                            disabled={isActionLoading}
-                                                            className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
-                                                        >
-                                                            <X className="w-3.5 h-3.5" /> Reject
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+            {loadingAmenities ? (
+                <div className="text-sm text-gray-500">Loading...</div>
+            ) : (
+                <>
+                    {/* Pending Requests Section */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                Pending Requests
+                            </h2>
                         </div>
+                        <DataTable
+                            ref={pendingTableRef}
+                            api={async (params) => fetchAmenityBookings({ ...params, status: 'pending' })}
+                            columns={getColumns()}
+                            defaultVisibleColumns={['Amenity', 'Start Time', 'End Time', 'User', 'Purpose', 'Status']}
+                            enableSearch={true}
+                            defaultView="table"
+                            defaultPageSize={10}
+                            enableSelection={false}
+                            exportable={false}
+                            extraRowActions={(b: AmenityBooking) => (
+                                b.status.toLowerCase() === 'pending' ? (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleAction(b.id, 'approve')}
+                                            disabled={actionLoadingId === b.id}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                                        >
+                                            <Check className="w-3.5 h-3.5" /> Approve
+                                        </button>
+                                        <button
+                                            onClick={() => handleAction(b.id, 'reject')}
+                                            disabled={actionLoadingId === b.id}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                                        >
+                                            <X className="w-3.5 h-3.5" /> Reject
+                                        </button>
+                                    </div>
+                                ) : null
+                            )}
+                            emptyMessage={
+                                <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl text-center text-gray-500 text-sm">
+                                    No pending amenity bookings requiring approval.
+                                </div>
+                            }
+                        />
                     </div>
-                )}
-            </div>
 
-            {/* All / Past Bookings Section */}
-            {pastBookings.length > 0 && (
-                <div className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                        History & Processed Bookings ({pastBookings.length})
-                    </h2>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-medium border-b border-gray-100 dark:border-gray-700">
-                                    <tr>
-                                        <th className="px-5 py-3">Amenity</th>
-                                        <th className="px-5 py-3">Start Time</th>
-                                        <th className="px-5 py-3">End Time</th>
-                                        <th className="px-5 py-3">Purpose</th>
-                                        <th className="px-5 py-3">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {pastBookings.map((b) => {
-                                        const matchedAmenity = amenities.find(a => a.id === b.amenity);
-                                        return (
-                                            <tr key={b.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30">
-                                                <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-white">
-                                                    {matchedAmenity ? matchedAmenity.name : `Amenity #${b.amenity}`}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-gray-600 dark:text-gray-300">
-                                                    {new Date(b.start_time).toLocaleString()}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-gray-600 dark:text-gray-300">
-                                                    {new Date(b.end_time).toLocaleString()}
-                                                </td>
-                                                <td className="px-5 py-3.5 text-gray-600 dark:text-gray-300">
-                                                    {b.purpose}
-                                                </td>
-                                                <td className="px-5 py-3.5">
-                                                    {getStatusBadge(b.status)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                    {/* History & Processed Bookings Section */}
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                            History & Processed Bookings
+                        </h2>
+                        <DataTable
+                            ref={historyTableRef}
+                            api={async (params) => fetchAmenityBookings({ ...params, status: 'processed' })}
+                            columns={getColumns()}
+                            defaultVisibleColumns={['Amenity', 'Start Time', 'End Time', 'User', 'Purpose', 'Status']}
+                            enableSearch={true}
+                            defaultView="table"
+                            defaultPageSize={10}
+                            enableSelection={false}
+                            exportable={false}
+                            emptyMessage={
+                                <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl text-center text-gray-500 text-sm">
+                                    No processed amenity bookings found.
+                                </div>
+                            }
+                        />
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

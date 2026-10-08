@@ -22,8 +22,8 @@ export const fetchAmenities = async () => {
     return response.data;
 }
 
-export const fetchAmenityBookings = async () => {
-    const response = await axiosInstance.get('/amenities/bookings/');
+export const fetchAmenityBookings = async (params?: Record<string, any>) => {
+    const response = await axiosInstance.get('/amenities/bookings/', { params });
     return response.data;
 }
 

@@ -28,6 +28,7 @@ class AmenityBooking(TimeStampedModel):
     end_time = models.DateTimeField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     purpose = models.TextField(max_length=255)
+    timeline = models.JSONField(default=list)
 
 
     class Meta:

@@ -4,7 +4,7 @@ from apt_proj.Apt_Accounts.serializers.flat_serializers import FlatSerializer
 
 class VisitorLogSerializer(serializers.ModelSerializer):
     flat_details = FlatSerializer(source='flat', read_only=True)
-    logged_by_name = serializers.CharField(source='logged_by.name', read_only=True)
+    logged_by_name = serializers.CharField(source='logged_by.username', read_only=True)
 
     class Meta:
         model = VisitorLog

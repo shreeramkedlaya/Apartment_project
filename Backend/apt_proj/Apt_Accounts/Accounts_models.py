@@ -106,3 +106,45 @@ class UserProfile(models.Model):
 @receiver([post_save, post_delete], sender=Flat)
 def clear_blocks_cache(sender, **kwargs):
     cache.delete('blocks_api_data')
+
+class CoResident(models.Model):
+    class Meta:
+        app_label = 'apt_proj'
+        db_table = '"apt_data"."co_residents"'
+    
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='co_residents')
+    name = models.CharField(max_length=100)
+    relation = models.CharField(max_length=50) # e.g., Spouse, Child, Roommate
+    age = models.IntegerField(null=True, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.relation})"
+
+class Vehicle(models.Model):
+    class Meta:
+        app_label = 'apt_proj'
+        db_table = '"apt_data"."vehicles"'
+        
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='vehicles')
+    vehicle_type = models.CharField(max_length=20, choices=[('Car', 'Car'), ('Motorcycle', 'Motorcycle'), ('Other', 'Other')], default='Car')
+    make = models.CharField(max_length=50)
+    model = models.CharField(max_length=50)
+    license_plate = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return f"{self.license_plate} - {self.make} {self.model}"
+
+class PersonalEmergencyContact(models.Model):
+    class Meta:
+        app_label = 'apt_proj'
+        db_table = '"apt_data"."personal_emergency_contacts"'
+        
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='personal_emergency_contacts')
+    name = models.CharField(max_length=100)
+    relation = models.CharField(max_length=50)
+    phone_number = models.CharField(max_length=20)
+    is_primary = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name} - {self.phone_number}"

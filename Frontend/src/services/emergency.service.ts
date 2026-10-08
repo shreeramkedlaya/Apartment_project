@@ -50,8 +50,8 @@ export interface EmergencyBroadcast {
     resolution_note?: string;
 }
 
-export const fetchBroadcasts = async () => {
-    const res = await axiosInstance.get('/emergency/broadcasts/');
+export const fetchBroadcasts = async (params?: Record<string, any>) => {
+    const res = await axiosInstance.get('/emergency/broadcasts/', { params });
     return res.data;
 };
 

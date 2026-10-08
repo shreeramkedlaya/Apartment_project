@@ -1,7 +1,16 @@
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.utils import timezone
 from ..Amenities_models import AmenityBooking
 from apt_proj.Apt_Notifications.tasks import send_notification_task
+
+def append_to_timeline(booking, event, user):
+    username = user.username if user else "System"
+    booking.timeline.append({
+        "event": event,
+        "timestamp": timezone.now().isoformat(),
+        "by": username
+    })
 
 def create_booking(user, amenity, start_time, end_time, purpose):
     # prevent creating a booking if the timeslot overlaps with an APPROVED/CONFIRMED booking
@@ -14,14 +23,18 @@ def create_booking(user, amenity, start_time, end_time, purpose):
 
     if overlapping:
         raise ValidationError("The selected timeslot overlaps with an existing booking")
-    booking = AmenityBooking.objects.create(
+        
+    booking = AmenityBooking(
         user=user,
         amenity=amenity,
         start_time=start_time,
         end_time=end_time,
         purpose=purpose,
-        status = AmenityBooking.Status.PENDING
+        status = AmenityBooking.Status.PENDING,
+        timeline = []
     )
+    append_to_timeline(booking, "Requested", user)
+    booking.save()
     return booking
 
 def update_booking_status(booking, new_status, manager):
@@ -41,7 +54,9 @@ def update_booking_status(booking, new_status, manager):
             raise ValidationError("Overlapping booking exists - cannot approve")
 
     booking.status = new_status
-    booking.save(update_fields = ['status', 'updated_at'])
+    event_name = "Approved" if new_status == AmenityBooking.Status.CONFIRMED else "Rejected" if new_status == AmenityBooking.Status.REJECTED else new_status.title()
+    append_to_timeline(booking, event_name, manager)
+    booking.save(update_fields = ['status', 'updated_at', 'timeline'])
 
     # send notification
     if new_status in [AmenityBooking.Status.CONFIRMED, AmenityBooking.Status.REJECTED]:
@@ -62,5 +77,6 @@ def cancel_booking(booking, user):
         raise ValidationError("Booking is already rejected or cancelled.")
 
     booking.status = AmenityBooking.Status.CANCELLED
-    booking.save(update_fields = ['status', 'updated_at'])
+    append_to_timeline(booking, "Cancelled", user)
+    booking.save(update_fields = ['status', 'updated_at', 'timeline'])
     return booking

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { ChevronRight, Shield, FileText, HelpCircle, LogOut, KeyRound } from 'lucide-react';
 import ResetMpinModal from './components/ResetMpinModal';
@@ -7,7 +7,7 @@ import axiosInstance from '@/services/core/axiosinstance';
 import { FRONTEND_VERSION } from '@/services/core/http';
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [isMpinModalOpen, setIsMpinModalOpen] = useState(false);
   const [backendVersion, setBackendVersion] = useState<string>('');
   const [documentModalState, setDocumentModalState] = useState<{ isOpen: boolean, title: string, type: 'tnc' | 'privacy' | null }>({
@@ -20,8 +20,6 @@ export default function SettingsPage() {
     const getVersions = async () => {
       try {
         const res = await axiosInstance.get('settings/version');
-        // StandardizedJSONRenderer wraps payload in { status, data: { version, main_version, sub_version } }
-        // axiosInstance unwraps res.data to the inner data object
         if (res.data?.version) {
           setBackendVersion(res.data.version);
         }
@@ -54,33 +52,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-
-        {/* Profile Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-2xl uppercase border-2 border-blue-200 dark:border-blue-800/60 shrink-0 shadow-inner">
-            {(user?.name || 'U').substring(0, 1).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">
-              {user?.name || 'User'}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
-              {user?.email || user?.phone || 'No contact info'}
-            </p>
-            <div className="flex gap-2 mt-2">
-              {user?.role && (
-                <span className="inline-flex px-2 py-0.5 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                  {user.role}
-                </span>
-              )}
-              {user?.flatNumber && (
-                <span className="inline-flex px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                  Flat {user.flatNumber}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Security Section */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">

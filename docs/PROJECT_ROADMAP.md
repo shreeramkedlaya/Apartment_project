@@ -36,6 +36,6 @@ This document tracks the end-to-end execution roadmap across all modules of the 
 ---
 
 ### 👤 Milestone 5: Resident Profile Extensions (Proposals)
-- [ ] **5.1 Family & Co-Residents**: Allow users to add family members, dependents, or roommates to their flat.
-- [ ] **5.2 Vehicle Registration**: Allow residents to register their cars and motorcycles (Make, Model, License Plate).
-- [ ] **5.3 Emergency Contacts**: Add primary and secondary emergency contacts.
+- [x] **5.1 Family & Co-Residents**: Allow users to add family members, dependents, or roommates to their flat.
+- [x] **5.2 Vehicle Registration**: Allow residents to register their cars and motorcycles (Make, Model, License Plate).
+- [x] **5.3 Emergency Contacts**: Add primary and secondary emergency contacts.

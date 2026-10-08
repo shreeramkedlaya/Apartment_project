@@ -1,5 +1,5 @@
 import {
-  Home, User, MessageSquare, Calendar, Settings, AlertTriangle
+  Home, User, MessageSquare, Calendar, Settings, AlertTriangle, UserCircle
 } from 'lucide-react';
 import React from 'react';
 
@@ -67,6 +67,11 @@ export const NAVIGATION: TabConfig[] = [
     label: "Emergency",
     icon: AlertTriangle,
     permissionId: "emergency.view",
+  },
+  {
+    id: "profile",
+    label: "My Profile",
+    icon: UserCircle,
   },
   {
     id: "settings",
