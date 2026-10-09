@@ -38,6 +38,9 @@ const EmergencyPage = lazy(() => import('@/pages/Dashboard/tabs/Emergency/Emerge
 const ProfilePage = lazy(() => import('@/pages/Dashboard/tabs/Profile/ProfilePage'));
 const SettingsPage = lazy(() => import('@/pages/Dashboard/tabs/Settings/SettingsPage'));
 
+// Finance
+const BillingPage = lazy(() => import('@/pages/Dashboard/tabs/Finance/BillingPage'));
+
 const QuickLoader = () => (
   <div className="flex items-center justify-center py-12 h-full">
     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -94,6 +97,9 @@ export default function DashboardLayout() {
         return <PlaceholderPage title={`Community: ${activeSubTab}`} />;
       case 'emergency':
         return <EmergencyPage />;
+      case 'finance':
+        if (activeSubTab === 'billing') return <BillingPage />;
+        return <PlaceholderPage title={`Finance: ${activeSubTab}`} />;
       case 'profile':
         return <ProfilePage />;
       case 'settings':

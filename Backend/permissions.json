@@ -139,6 +139,21 @@
     ]
   },
   {
+    "id": "finance",
+    "name": "Finance",
+    "children": [
+      {
+        "id": "finance.billing",
+        "name": "Billing",
+        "children": [
+          { "id": "finance.billing.view", "name": "View" },
+          { "id": "finance.billing.generate", "name": "Generate Invoices" },
+          { "id": "finance.billing.process_payment", "name": "Process Payments" }
+        ]
+      }
+    ]
+  },
+  {
     "id": "emergency",
     "name": "Emergency",
     "children": [

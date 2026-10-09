@@ -7,6 +7,7 @@ from .Apt_Notices.Notices_models import Notice, NoticeApproval, NoticeAcknowledg
 from .Apt_Storage.models import Media
 from .Apt_Visitors.Visitor_models import VisitorLog
 from .Apt_Amenities.Amenities_models import Amenity, AmenityBooking
+from .Apt_Billing.Billing_models import *
 
 __all__ = [
     "UserProfile",

@@ -3,6 +3,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import axiosInstance from '@/services/core/axiosinstance';
 import { useToast } from '@/context/ToastContext';
 import { createVisitorLog } from '../services/visitor.service';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 
 interface Flat {
   id: number;
@@ -83,23 +84,21 @@ const NewVisitorForm = ({ onComplete }: NewVisitorFormProps) => {
 
   return (
     <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Flat</label>
-        <select
-          value={selectedFlat}
-          onChange={(e) => setSelectedFlat(e.target.value === "" ? "" : Number(e.target.value))}
-          className="w-full px-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+      <div>
+        <CustomDropdown
+          label="Flat"
           required
-        >
-          <option value="">Select Flat...</option>
-          {blocks.map(block => (
-            <optgroup key={block.id} label={block.name}>
-              {block.flats.map(flat => (
-                <option key={flat.id} value={flat.id}>{block.name} - {flat.number}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+          placeholder="Select Flat..."
+          options={blocks.map(block => ({
+            group: block.name,
+            items: block.flats.map(flat => ({
+              value: flat.id,
+              label: `${block.name} - ${flat.number}`
+            }))
+          }))}
+          value={selectedFlat}
+          onChange={(val) => setSelectedFlat(val === "" ? "" : Number(val))}
+        />
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visitor Name</label>

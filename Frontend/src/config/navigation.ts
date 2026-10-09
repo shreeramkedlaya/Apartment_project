@@ -1,5 +1,5 @@
 import {
-  Home, User, MessageSquare, Calendar, Settings, AlertTriangle, UserCircle
+  Home, User, MessageSquare, Calendar, Settings, AlertTriangle, UserCircle, CreditCard
 } from 'lucide-react';
 import React from 'react';
 
@@ -60,6 +60,14 @@ export const NAVIGATION: TabConfig[] = [
     subTabs: [
       { id: "users", label: "Users", permissionId: "administration.users.view" },
       { id: "roles", label: "Roles", permissionId: "administration.roles.view" },
+    ]
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    icon: CreditCard, 
+    subTabs: [
+      { id: "billing", label: "Billing", permissionId: "finance.billing.view" }
     ]
   },
   {

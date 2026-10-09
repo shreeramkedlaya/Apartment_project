@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '@/components/ui/Modal';
+import { CustomDropdown } from '@/components/ui/CustomDropdown';
 import { AlertTriangle, Radio } from 'lucide-react';
 import { createBroadcast } from '@/services/emergency.service';
 import { useToast } from '@/context/ToastContext';
@@ -22,7 +23,7 @@ const TriggerBroadcastModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!formData.title || !formData.message) {
             showToast('Please fill in all fields', 'error');
             return;
@@ -73,36 +74,32 @@ const TriggerBroadcastModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) 
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                            Severity
-                        </label>
-                        <select
+                        <CustomDropdown
+                            label="Severity"
+                            options={[
+                                { label: 'Critical', value: 'CRITICAL' },
+                                { label: 'High', value: 'HIGH' },
+                                { label: 'Warning', value: 'WARNING' },
+                                { label: 'Info', value: 'INFO' }
+                            ]}
                             value={formData.severity}
-                            onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
-                        >
-                            <option value="CRITICAL">Critical</option>
-                            <option value="HIGH">High</option>
-                            <option value="WARNING">Warning</option>
-                            <option value="INFO">Info</option>
-                        </select>
+                            onChange={(val) => setFormData({ ...formData, severity: val })}
+                        />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                            Category
-                        </label>
-                        <select
+                        <CustomDropdown
+                            label="Category"
+                            options={[
+                                { label: 'Security Alert', value: 'SECURITY_ALERT' },
+                                { label: 'Fire Hazard', value: 'FIRE_HAZARD' },
+                                { label: 'Medical Emergency', value: 'MEDICAL_EMERGENCY' },
+                                { label: 'Natural Disaster', value: 'NATURAL_DISASTER' },
+                                { label: 'Utility Failure', value: 'UTILITY_FAILURE' },
+                                { label: 'Other', value: 'OTHER' }
+                            ]}
                             value={formData.category}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
-                        >
-                            <option value="SECURITY_ALERT">Security Alert</option>
-                            <option value="FIRE_HAZARD">Fire Hazard</option>
-                            <option value="MEDICAL_EMERGENCY">Medical Emergency</option>
-                            <option value="NATURAL_DISASTER">Natural Disaster</option>
-                            <option value="UTILITY_FAILURE">Utility Failure</option>
-                            <option value="OTHER">Other</option>
-                        </select>
+                            onChange={(val) => setFormData({ ...formData, category: val })}
+                        />
                     </div>
                 </div>
 

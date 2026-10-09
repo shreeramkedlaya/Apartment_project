@@ -9,5 +9,6 @@ urlpatterns = [
     path('storage/',include('apt_proj.Apt_Storage.urls')),
     path('visitors/',include('apt_proj.Apt_Visitors.urls')),
     path('amenities/', include('apt_proj.Apt_Amenities.urls')),
-    path('emergency/', include('apt_proj.Apt_Emergency.urls'))
+    path('emergency/', include('apt_proj.Apt_Emergency.urls')),
+    path('billing/', include('apt_proj.Apt_Billing.urls')),
 ]
