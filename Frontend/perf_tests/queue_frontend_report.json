@@ -1,0 +1,76 @@
+[
+  {
+    "test": "Profile Input Constraints",
+    "phone_filtered_value": "9876543",
+    "plate_uppercase_value": "KA05MN8899",
+    "mount_ms": 89.18,
+    "status": "PASS"
+  },
+  {
+    "test": "Visitor Intercept Modal Action",
+    "mount_ms": 2.08,
+    "action_dispatched": "REJECT",
+    "status": "PASS"
+  },
+  {
+    "test": "ActiveAlertBanner Mount & Display",
+    "mount_ms": 1.67,
+    "severity": "CRITICAL",
+    "status": "PASS"
+  },
+  {
+    "test": "Notice Modal Stepper Navigation",
+    "mount_ms": 39.43,
+    "transitioned_to_step": 2,
+    "status": "PASS"
+  },
+  {
+    "test": "GenerateBillModal Input Construction",
+    "status": "PASS"
+  },
+  {
+    "test": "PaymentModal Gateway Simulation",
+    "amount": 1850,
+    "status": "PASS"
+  },
+  {
+    "test": "Leak Check",
+    "component": "VisitorInterceptModal",
+    "cycles": 100,
+    "ms_per_cycle": 0.8,
+    "heap_growth_mb": 0.22,
+    "kb_per_cycle": 2.2,
+    "leftover_dom_nodes": 0,
+    "leak_verdict": "NO LEAK"
+  },
+  {
+    "test": "Leak Check",
+    "component": "ActiveAlertBanner",
+    "cycles": 100,
+    "ms_per_cycle": 0.63,
+    "heap_growth_mb": 0.34,
+    "kb_per_cycle": 3.5,
+    "leftover_dom_nodes": 0,
+    "leak_verdict": "NO LEAK"
+  },
+  {
+    "test": "Leak Check",
+    "component": "PaymentModal",
+    "cycles": 100,
+    "ms_per_cycle": 4.01,
+    "heap_growth_mb": 0.62,
+    "kb_per_cycle": 6.4,
+    "leftover_dom_nodes": 0,
+    "leak_verdict": "NO LEAK"
+  },
+  {
+    "test": "Leak Check",
+    "component": "CreateNoticeModal",
+    "cycles": 100,
+    "ms_per_cycle": 11.52,
+    "heap_growth_mb": 1.27,
+    "kb_per_cycle": 13,
+    "leftover_dom_nodes": 0,
+    "leak_verdict": "NO LEAK"
+  }
+]

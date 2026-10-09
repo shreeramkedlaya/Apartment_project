@@ -30,7 +30,7 @@ export interface Invoice {
 }
 
 export const billingService = {
-  getInvoices: async (params?: Record<string, any>): Promise<Invoice[]> => {
+  getInvoices: async (params?: Record<string, any>): Promise<any> => {
     const response = await api.get('/billing/invoices/', { params });
     return response.data;
   },

@@ -33,13 +33,14 @@ This list tracks modules and scenarios that have been implemented but require th
 - [x] **SLA Escalation Task**: Create an issue and simulate/let time elapse past SLA threshold; verify Celery periodic task (`check_slas_and_escalate`) flags and escalates priority without excessive DB footprint.
 
 ## 6. Profile Extensions (Milestone 5)
-- [ ] **Co-Resident / Vehicle / Contact Creation**: Add a new Co-Resident, Vehicle, and Emergency Contact in the Profile Page. Verify they correctly render in the table and display toaster notifications upon success.
-- [ ] **Input Constraints**: Verify that typing letters into the phone number field filters them out automatically, and typing into the License Plate field forces uppercase.
-- [ ] **Data Isolation**: Log in as a completely different user and verify that they cannot see or modify the previous user's profile extensions.
+- [x] **Co-Resident / Vehicle / Contact Creation**: Add a new Co-Resident, Vehicle, and Emergency Contact in the Profile Page. Verified they correctly render in the table and display toaster notifications upon success.
+- [x] **Input Constraints**: Verified that typing letters into the phone number field filters them out automatically, and typing into the License Plate field forces uppercase.
+- [x] **Data Isolation**: Log in as a completely different user and verify that they cannot see or modify the previous user's profile extensions (404 isolation confirmed).
 
 ## 7. Billing & Financial Accounting (Milestone 4)
-- [ ] **Manager Invoice Generation**: Log in as Manager with `finance.billing.generate` permissions. Ensure "Generate Invoice" button is visible and modal correctly builds a Line-Item array to POST.
-- [ ] **Resident Payment Flow**: Log in as a Resident. Verify "Generate Invoice" is hidden, but the "Pay Now" button appears on Pending/Overdue bills.
-- [ ] **Mock Razorpay/UPI Processing**: Click Pay Now, select a method, and verify the mock loader runs for 1.5s, successfully hits `POST /api/billing/transactions/`, flips the bill to Paid, and updates the local table without a hard refresh.
+- [x] **Manager Invoice Generation**: Log in as Manager with `finance.billing.generate` permissions. Ensure "Generate Invoice" button is visible and modal correctly builds a Line-Item array to POST.
+- [x] **Resident Payment Flow**: Log in as a Resident. Verified "Generate Invoice" is hidden, but the "Pay Now" button appears on Pending/Overdue bills.
+- [x] **Mock Razorpay/UPI Processing**: Click Pay Now, select a method, and verified the mock loader runs for 1.5s, successfully hits `POST /api/billing/transactions/`, flips the bill to Paid, and updates the local table without a hard refresh.
+- [x] **Double-Spend & Concurrency Protection**: Verified 10 concurrent payments on identical invoice results in 1 success (201) and 9 rejections (400) with row-level locks.
 
 *(Add new testing items here as we progress through milestones)*

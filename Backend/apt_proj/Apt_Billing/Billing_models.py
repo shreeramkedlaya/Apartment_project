@@ -34,9 +34,12 @@ class Invoice(TimeStampedModel):
     class Meta:
         app_label = 'apt_proj'
         db_table = '"apt_data"."invoices"'
+        indexes = [
+            models.Index(fields=['status', '-created_at'], name='invoices_status_created_idx'),
+        ]
 
     def __str__(self):
-        return f"{self.title} - {self.flat.flat_number}"
+        return f"{self.title} - {self.flat.number}"
 
 class Transaction(TimeStampedModel):
     class PaymentMethod(models.TextChoices):

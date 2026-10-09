@@ -24,6 +24,10 @@ class Flat(models.Model):
         db_table = '"apt_data"."flats"'
         unique_together = ('block', 'number')
 
+    @property
+    def flat_number(self):
+        return f"{self.block.name} - {self.number}"
+
     def __str__(self):
         return f"{self.block.name} - {self.number}"
 

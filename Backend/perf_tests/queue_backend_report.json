@@ -1,0 +1,338 @@
+{
+  "modules": {
+    "Notices": [
+      {
+        "scenario": "Notice Creation & Targeting (Draft)",
+        "status": 201,
+        "avg_ms": 1657.88,
+        "db_reads": 5,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 15253.5
+      },
+      {
+        "scenario": "Validation Error Feedback (Past Date -> 400)",
+        "status": 400,
+        "avg_ms": 5.42,
+        "db_reads": 0,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0,
+        "peak_mem_kb": 108.4
+      },
+      {
+        "scenario": "Notice Publish Flow (Draft -> Published)",
+        "status": 200,
+        "avg_ms": 4179.51,
+        "db_reads": 11,
+        "db_writes": 2,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 1644.8
+      },
+      {
+        "scenario": "Resident Acknowledgement (Accept -> 200)",
+        "status": 200,
+        "avg_ms": 11.16,
+        "db_reads": 2,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 79.3
+      },
+      {
+        "scenario": "Resident Acknowledgement (Decline -> 200)",
+        "status": 200,
+        "avg_ms": 7.29,
+        "db_reads": 2,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 57.0
+      },
+      {
+        "scenario": "Backend Filtering & Sorting",
+        "status": 200,
+        "avg_ms": 31.61,
+        "db_reads": 16,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 31.0,
+        "peak_mem_kb": 189.6
+      },
+      {
+        "scenario": "Scheduled Notices Celery Task",
+        "status": 200,
+        "avg_ms": 6.7,
+        "db_reads": 2,
+        "db_writes": 1,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 105.6
+      }
+    ],
+    "Visitors": [
+      {
+        "scenario": "Visitor Log Creation (Security/Admin)",
+        "status": 201,
+        "avg_ms": 17.38,
+        "db_reads": 3,
+        "db_writes": 2,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 179.3
+      },
+      {
+        "scenario": "Auto-Approve Fallback Task (Celery)",
+        "status": 200,
+        "avg_ms": 5.75,
+        "db_reads": 3,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 15.0,
+        "peak_mem_kb": 103.0
+      },
+      {
+        "scenario": "Resident Active Rejection (Deny -> 200)",
+        "status": 200,
+        "avg_ms": 12.22,
+        "db_reads": 4,
+        "db_writes": 1,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 119.2
+      }
+    ],
+    "Amenities": [
+      {
+        "scenario": "Validation Error: End Before Start (-> 400)",
+        "status": 400,
+        "avg_ms": 4.79,
+        "db_reads": 1,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 77.1
+      },
+      {
+        "scenario": "Validation Error: Past Date (-> 400)",
+        "status": 400,
+        "avg_ms": 6.07,
+        "db_reads": 1,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 45.7
+      },
+      {
+        "scenario": "Resident Booking Submission (Pending -> 201)",
+        "status": 201,
+        "avg_ms": 9.43,
+        "db_reads": 2,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 91.2
+      },
+      {
+        "scenario": "Manager Approval Flow (Pending -> Confirmed)",
+        "status": 200,
+        "avg_ms": 19.94,
+        "db_reads": 4,
+        "db_writes": 1,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 125.6
+      },
+      {
+        "scenario": "Overlapping Slot vs Confirmed (Expect 400)",
+        "status": 400,
+        "avg_ms": 8.46,
+        "db_reads": 2,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 57.6
+      },
+      {
+        "scenario": "Manager Rejection Flow (Pending -> Rejected)",
+        "status": 200,
+        "avg_ms": 15.91,
+        "db_reads": 3,
+        "db_writes": 1,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 123.3
+      },
+      {
+        "scenario": "Resident Cancellation Flow (-> Cancelled)",
+        "status": 200,
+        "avg_ms": 6.76,
+        "db_reads": 2,
+        "db_writes": 1,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 52.0
+      }
+    ],
+    "Emergency": [
+      {
+        "scenario": "Role Authorization (Resident POST Broadcast -> 403)",
+        "status": 403,
+        "avg_ms": 2.05,
+        "db_reads": 0,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0,
+        "peak_mem_kb": 21.4
+      },
+      {
+        "scenario": "Manager Trigger Global Broadcast (-> 201)",
+        "status": 201,
+        "avg_ms": 10.24,
+        "db_reads": 0,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 166.8
+      },
+      {
+        "scenario": "Manager Resolution Flow (Active -> Resolved)",
+        "status": 200,
+        "avg_ms": 17.6,
+        "db_reads": 3,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 150.8
+      },
+      {
+        "scenario": "Directory Visibility (Resident GET -> 200)",
+        "status": 200,
+        "avg_ms": 4.78,
+        "db_reads": 1,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 16.0,
+        "peak_mem_kb": 65.7
+      },
+      {
+        "scenario": "Directory Auth (Resident POST Contact -> 403)",
+        "status": 403,
+        "avg_ms": 1.58,
+        "db_reads": 0,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0,
+        "peak_mem_kb": 16.6
+      },
+      {
+        "scenario": "Directory Auth (Manager POST Contact -> 201)",
+        "status": 201,
+        "avg_ms": 7.46,
+        "db_reads": 0,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 92.5
+      }
+    ],
+    "Helpdesk": [
+      {
+        "scenario": "SLA Escalation Task (Celery Periodic)",
+        "status": 200,
+        "avg_ms": 13.04,
+        "db_reads": 2,
+        "db_writes": 2,
+        "db_other": 2,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 69.5
+      }
+    ],
+    "Profile Extensions": [
+      {
+        "scenario": "Co-Resident Creation (POST -> 201)",
+        "status": 201,
+        "avg_ms": 4.58,
+        "db_reads": 0,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 64.6
+      },
+      {
+        "scenario": "Vehicle Creation (POST -> 201)",
+        "status": 201,
+        "avg_ms": 5.48,
+        "db_reads": 1,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 67.4
+      },
+      {
+        "scenario": "Personal Contact Creation (POST -> 201)",
+        "status": 201,
+        "avg_ms": 5.67,
+        "db_reads": 0,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 80.9
+      },
+      {
+        "scenario": "Data Isolation (User 2 GET User 1 -> 404)",
+        "status": 404,
+        "avg_ms": 4.1,
+        "db_reads": 1,
+        "db_writes": 0,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 36.6
+      }
+    ],
+    "Billing": [
+      {
+        "scenario": "Manager Invoice Generation (POST -> 201)",
+        "status": 201,
+        "avg_ms": 10.95,
+        "db_reads": 3,
+        "db_writes": 1,
+        "db_other": 0,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 154.7
+      },
+      {
+        "scenario": "Resident Payment Flow (Full Settle -> 201)",
+        "status": 201,
+        "avg_ms": 14.89,
+        "db_reads": 3,
+        "db_writes": 2,
+        "db_other": 4,
+        "db_time_ms": 0.0,
+        "peak_mem_kb": 88.4
+      }
+    ]
+  },
+  "concurrency": {
+    "scenario": "10 Concurrent Payments on Same Invoice (Race Condition)",
+    "statuses": [
+      201,
+      400,
+      400,
+      400,
+      400,
+      400,
+      400,
+      400,
+      400,
+      400
+    ],
+    "success_201_count": 1,
+    "rejected_count": 9,
+    "committed_transactions": 1,
+    "verdict": "PASS"
+  },
+  "summary": []
+}

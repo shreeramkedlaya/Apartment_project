@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Count, Q
 from .base_views import BillingBaseAPIView
 from ..Billing_models import Invoice
 from ..serializers.billing_serializers import InvoiceSerializer
@@ -7,7 +8,7 @@ from ..services.billing_service import generate_invoice
 
 class InvoiceListCreateAPIView(BillingBaseAPIView):
     def get(self, request):
-        invoices = Invoice.objects.all()
+        invoices = Invoice.objects.select_related('flat__block', 'billed_to').prefetch_related('transactions__paid_by')
         
         # Filtering for Manager Dashboard / Resident View
         status_param = request.query_params.get('status')
@@ -24,6 +25,24 @@ class InvoiceListCreateAPIView(BillingBaseAPIView):
             
         invoices = invoices.order_by('-created_at')
         
+        # Pagination support (compatible with DataTable server mode)
+        if request.query_params.get('page'):
+            from apt_proj.pagination import StatsPagination
+            paginator = StatsPagination()
+
+            # Aggregate stats across all invoices for the summary bar
+            stats_agg = Invoice.objects.aggregate(
+                total=Count('id'),
+                paid=Count('id', filter=Q(status=Invoice.Status.PAID)),
+                pending=Count('id', filter=Q(status=Invoice.Status.PENDING)),
+                overdue=Count('id', filter=Q(status=Invoice.Status.OVERDUE)),
+            )
+            paginator.stats = {'stats': stats_agg}
+
+            paginated_invoices = paginator.paginate_queryset(invoices, request, view=self)
+            serializer = InvoiceSerializer(paginated_invoices, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
         serializer = InvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
 

@@ -1,0 +1,100 @@
+[
+  {
+    "test": "DataTable mount",
+    "rows": 100,
+    "mount_ms": 86.3,
+    "rerender_ms": 19.8,
+    "commits": 6,
+    "dom_nodes": 110,
+    "heap_delta_mb": 7.18
+  },
+  {
+    "test": "DataTable mount",
+    "rows": 1000,
+    "mount_ms": 40.1,
+    "rerender_ms": 16.5,
+    "commits": 6,
+    "dom_nodes": 110,
+    "heap_delta_mb": 5.58
+  },
+  {
+    "test": "DataTable mount",
+    "rows": 5000,
+    "mount_ms": 35.7,
+    "rerender_ms": 27.6,
+    "commits": 6,
+    "dom_nodes": 110,
+    "heap_delta_mb": 6.58
+  },
+  {
+    "test": "DataTable mount",
+    "rows": 20000,
+    "mount_ms": 45.8,
+    "rerender_ms": 22.5,
+    "commits": 6,
+    "dom_nodes": 110,
+    "heap_delta_mb": 10.43
+  },
+  {
+    "test": "DataTable search",
+    "rows": 5000,
+    "avg_ms": 9.8,
+    "max_ms": 16.5
+  },
+  {
+    "test": "DataTable api fetch count on mount",
+    "calls": 1
+  },
+  {
+    "test": "DataTable refresh()",
+    "extra_calls": 1
+  },
+  {
+    "test": "CustomDropdown open",
+    "options": 50,
+    "open_ms": 35.2,
+    "dom_nodes_in_body": 216
+  },
+  {
+    "test": "CustomDropdown open",
+    "options": 500,
+    "open_ms": 211.9,
+    "dom_nodes_in_body": 2016
+  },
+  {
+    "test": "CustomDropdown open",
+    "options": 2000,
+    "open_ms": 417.5,
+    "dom_nodes_in_body": 8016
+  },
+  {
+    "test": "Leak check",
+    "component": "DataTable(500 rows)",
+    "cycles": 200,
+    "ms_per_cycle": 12.46,
+    "heap_growth_mb": 0.69,
+    "kb_per_cycle": 3.5,
+    "leftover_dom_nodes": 0,
+    "gc_available": true
+  },
+  {
+    "test": "Leak check",
+    "component": "CustomDropdown(500 opts)",
+    "cycles": 200,
+    "ms_per_cycle": 1.25,
+    "heap_growth_mb": 0.21,
+    "kb_per_cycle": 1.1,
+    "leftover_dom_nodes": 0,
+    "gc_available": true
+  },
+  {
+    "test": "Leak check",
+    "component": "Modal(open)",
+    "cycles": 200,
+    "ms_per_cycle": 1.7,
+    "heap_growth_mb": 0.39,
+    "kb_per_cycle": 2,
+    "leftover_dom_nodes": 0,
+    "gc_available": true
+  }
+]

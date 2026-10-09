@@ -11,8 +11,15 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
     transactions = TransactionSerializer(many=True, read_only=True)
-    flat_number = serializers.CharField(source='flat.flat_number', read_only=True)
+    flat_number = serializers.SerializerMethodField()
 
     class Meta:
         model = Invoice
         fields = '__all__'
+
+    def get_flat_number(self, obj):
+        if obj.flat:
+            if hasattr(obj.flat, 'block') and obj.flat.block:
+                return f"{obj.flat.block.name} - {obj.flat.number}"
+            return str(obj.flat.number)
+        return ''

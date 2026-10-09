@@ -54,7 +54,16 @@ const BillingPage: React.FC = () => {
     }
   ];
 
-  const computeStats = (data: Invoice[]) => {
+  const computeStats = (data: Invoice[], backendStats?: any) => {
+    if (backendStats?.stats) {
+      const bs = backendStats.stats;
+      return [
+        { label: 'Total Invoices', value: bs.total || 0, icon: FileText, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+        { label: 'Paid', value: bs.paid || 0, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+        { label: 'Pending', value: bs.pending || 0, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+        { label: 'Overdue', value: bs.overdue || 0, icon: Clock, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
+      ];
+    }
     const total = data.length;
     const paid = data.filter(i => i.status === 'Paid').length;
     const pending = data.filter(i => i.status === 'Pending').length;
@@ -98,7 +107,10 @@ const BillingPage: React.FC = () => {
           ref={tableRef}
           api={async (params) => {
             const res = await billingService.getInvoices(params);
-            return { results: res, count: res.length };
+            if (res && res.results) {
+              return res;
+            }
+            return { results: res || [], count: res?.length || 0 };
           }}
           columns={columns}
           defaultVisibleColumns={['Title', 'Category', 'Flat', 'Amount', 'Due Date', 'Status']}

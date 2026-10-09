@@ -1,0 +1,282 @@
+{
+  "scenarios": [
+    {
+      "name": "GET billing/invoices/ (1000 rows, unpaginated)",
+      "status": 200,
+      "avg_ms": 739.41,
+      "p95_ms": 790.74,
+      "min_ms": 590.35,
+      "max_ms": 841.75,
+      "db_reads": 2,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 16.0,
+      "peak_mem_kb": 30087.0,
+      "resp_kb": 373.9
+    },
+    {
+      "name": "GET billing/invoices/?page=1 (paginated 10 rows)",
+      "status": 200,
+      "avg_ms": 23.56,
+      "p95_ms": 25.66,
+      "min_ms": 20.31,
+      "max_ms": 27.01,
+      "db_reads": 4,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 756.9,
+      "resp_kb": 3.9
+    },
+    {
+      "name": "GET billing/invoices/?status=Pending",
+      "status": 200,
+      "avg_ms": 492.47,
+      "p95_ms": 541.2,
+      "min_ms": 393.3,
+      "max_ms": 556.32,
+      "db_reads": 2,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 20536.6,
+      "resp_kb": 249.1
+    },
+    {
+      "name": "GET billing/invoices/<id>/",
+      "status": 200,
+      "avg_ms": 16.67,
+      "p95_ms": 16.57,
+      "min_ms": 15.68,
+      "max_ms": 18.82,
+      "db_reads": 4,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 221.7,
+      "resp_kb": 0.4
+    },
+    {
+      "name": "POST billing/invoices/ (create)",
+      "status": 201,
+      "avg_ms": 14.06,
+      "p95_ms": 14.66,
+      "min_ms": 12.22,
+      "max_ms": 16.37,
+      "db_reads": 3,
+      "db_writes": 1,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 228.7,
+      "resp_kb": 0.4
+    },
+    {
+      "name": "POST billing/transactions/ (pay)",
+      "status": 201,
+      "avg_ms": 16.47,
+      "p95_ms": 16.99,
+      "min_ms": 15.07,
+      "max_ms": 16.99,
+      "db_reads": 3,
+      "db_writes": 2,
+      "db_other": 4,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 203.0,
+      "resp_kb": 0.2
+    },
+    {
+      "name": "GET accounts/blocks/",
+      "status": 200,
+      "avg_ms": 3.55,
+      "p95_ms": 3.97,
+      "min_ms": 2.88,
+      "max_ms": 4.05,
+      "db_reads": 0,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0,
+      "peak_mem_kb": 173.0,
+      "resp_kb": 1.1
+    },
+    {
+      "name": "GET accounts/me/",
+      "status": 200,
+      "avg_ms": 3.03,
+      "p95_ms": 3.12,
+      "min_ms": 2.37,
+      "max_ms": 4.26,
+      "db_reads": 0,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0,
+      "peak_mem_kb": 127.6,
+      "resp_kb": 0.2
+    },
+    {
+      "name": "GET accounts/me/vehicles/",
+      "status": 200,
+      "avg_ms": 4.53,
+      "p95_ms": 4.91,
+      "min_ms": 3.43,
+      "max_ms": 5.67,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 102.8,
+      "resp_kb": 0.0
+    },
+    {
+      "name": "GET accounts/me/co-residents/",
+      "status": 200,
+      "avg_ms": 3.68,
+      "p95_ms": 3.95,
+      "min_ms": 3.08,
+      "max_ms": 4.11,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 16.0,
+      "peak_mem_kb": 75.3,
+      "resp_kb": 0.0
+    },
+    {
+      "name": "GET accounts/me/emergency-contacts/",
+      "status": 200,
+      "avg_ms": 2.95,
+      "p95_ms": 3.45,
+      "min_ms": 2.4,
+      "max_ms": 3.68,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 101.0,
+      "resp_kb": 0.0
+    },
+    {
+      "name": "GET issues/",
+      "status": 200,
+      "avg_ms": 6.97,
+      "p95_ms": 7.67,
+      "min_ms": 5.8,
+      "max_ms": 8.52,
+      "db_reads": 3,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 93.9,
+      "resp_kb": 0.1
+    },
+    {
+      "name": "GET notices/my-notices/",
+      "status": 200,
+      "avg_ms": 5.93,
+      "p95_ms": 6.48,
+      "min_ms": 5.42,
+      "max_ms": 6.48,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 143.5,
+      "resp_kb": 0.0
+    },
+    {
+      "name": "GET visitors/",
+      "status": 200,
+      "avg_ms": 4.08,
+      "p95_ms": 4.14,
+      "min_ms": 3.35,
+      "max_ms": 5.53,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 16.0,
+      "peak_mem_kb": 67.2,
+      "resp_kb": 0.1
+    },
+    {
+      "name": "GET amenities/",
+      "status": 200,
+      "avg_ms": 2.93,
+      "p95_ms": 3.41,
+      "min_ms": 2.28,
+      "max_ms": 3.51,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 82.5,
+      "resp_kb": 0.0
+    },
+    {
+      "name": "GET amenities/bookings/",
+      "status": 200,
+      "avg_ms": 4.18,
+      "p95_ms": 4.02,
+      "min_ms": 3.4,
+      "max_ms": 5.49,
+      "db_reads": 1,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 93.1,
+      "resp_kb": 0.1
+    },
+    {
+      "name": "GET dashboard/summary/",
+      "status": 200,
+      "avg_ms": 7.08,
+      "p95_ms": 8.35,
+      "min_ms": 5.78,
+      "max_ms": 8.47,
+      "db_reads": 3,
+      "db_writes": 0,
+      "db_other": 0,
+      "db_time_ms": 0.0,
+      "peak_mem_kb": 96.6,
+      "resp_kb": 0.2
+    }
+  ],
+  "concurrency": [
+    {
+      "case": "5 parallel payments (distinct invoices)",
+      "statuses": [
+        201
+      ],
+      "wall_ms": 485.5,
+      "avg_ms": 10.0,
+      "max_ms": 11.3,
+      "throughput_rps": 10.3
+    },
+    {
+      "case": "20 parallel payments (distinct invoices)",
+      "statuses": [
+        201
+      ],
+      "wall_ms": 2131.4,
+      "avg_ms": 12.4,
+      "max_ms": 18.0,
+      "throughput_rps": 9.4
+    },
+    {
+      "case": "10 simultaneous payments, SAME invoice (double-spend race)",
+      "statuses": [
+        201,
+        400
+      ],
+      "created_201": 1,
+      "transactions_in_db": 1,
+      "verdict": "PASS"
+    }
+  ],
+  "notes": [
+    "Re-pay already-paid invoice -> HTTP 400 (expect 400)",
+    "Underpayment (amount=1 vs 1500) -> HTTP 201; invoice status now Overdue (expect rejection / partial)",
+    "EXPLAIN invoices?status=Pending: Sort  (cost=72.79..74.63 rows=735 width=149) (actual time=0.201..0.217 rows=651.00 loops=1) |   Sort Key: created_at DESC |   Sort Method: quicksort  Memory: 137kB",
+    "invoices table size: 456 kB",
+    "invoices indexes: invoices_pkey, invoices_billed_to_id_c996d482, invoices_flat_id_ee95b174, invoices_status_created_idx"
+  ],
+  "mode": "as-is"
+}
