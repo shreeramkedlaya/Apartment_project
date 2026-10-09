@@ -37,4 +37,9 @@ This list tracks modules and scenarios that have been implemented but require th
 - [ ] **Input Constraints**: Verify that typing letters into the phone number field filters them out automatically, and typing into the License Plate field forces uppercase.
 - [ ] **Data Isolation**: Log in as a completely different user and verify that they cannot see or modify the previous user's profile extensions.
 
+## 7. Billing & Financial Accounting (Milestone 4)
+- [ ] **Manager Invoice Generation**: Log in as Manager with `finance.billing.generate` permissions. Ensure "Generate Invoice" button is visible and modal correctly builds a Line-Item array to POST.
+- [ ] **Resident Payment Flow**: Log in as a Resident. Verify "Generate Invoice" is hidden, but the "Pay Now" button appears on Pending/Overdue bills.
+- [ ] **Mock Razorpay/UPI Processing**: Click Pay Now, select a method, and verify the mock loader runs for 1.5s, successfully hits `POST /api/billing/transactions/`, flips the bill to Paid, and updates the local table without a hard refresh.
+
 *(Add new testing items here as we progress through milestones)*

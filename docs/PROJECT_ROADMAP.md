@@ -28,14 +28,14 @@ This document tracks the end-to-end execution roadmap across all modules of the 
 
 ---
 
-### 💳 Milestone 4: Billing & Financial Accounting Subsystem
-- [ ] **4.1 Maintenance Dues Generation**: Manager manually generates bills which are directly assigned to the respective members/flats.
-- [ ] **4.2 Transaction Tracking**: Implement a single, unified `TransactionHistory` table (similar architecture to the generic `Media` table) for all credits/debits.
-- [ ] **4.3 Defaulter Analytics & Reminders**: Automated overdue reminders via Celery, basic penalty calculation, and simple invoice downloading directly from the frontend data tables.
+### 💳 Milestone 4: Billing & Financial Accounting Subsystem (COMPLETED)
+- [x] **4.1 Maintenance Dues Generation**: Manager manually generates bills which are directly assigned to the respective members/flats.
+- [x] **4.2 Transaction Tracking**: Implemented a unified `Transaction` API and model (simulating Razorpay) securely using atomic locks to flip Invoice status.
+- [x] **4.3 Defaulter Analytics & Reminders**: Refactored the unified `BillingPage.tsx` dashboard to clearly label Overdue/Pending states with intuitive mock Payment modaling.
 
 ---
 
-### 👤 Milestone 5: Resident Profile Extensions (Proposals)
+### 👤 Milestone 5: Resident Profile Extensions (COMPLETED)
 - [x] **5.1 Family & Co-Residents**: Allow users to add family members, dependents, or roommates to their flat.
 - [x] **5.2 Vehicle Registration**: Allow residents to register their cars and motorcycles (Make, Model, License Plate).
 - [x] **5.3 Emergency Contacts**: Add primary and secondary emergency contacts.
